@@ -1,0 +1,117 @@
+{% extends 'pages/base.html' %}
+
+{% block  main_content %}
+
+
+<div class="jumbotron">
+    <div class="container">
+        <h3> Sistema de cálculo do IBS </h3>
+    </div>
+</div>
+
+
+<main role="main" class="container">
+
+  <div class="jumbotron">
+
+      <h1>Formulário </h1>
+      <p class="lead"> Utilize o formulário para envio dos arquivos necessários para o cálculo do IBS. </p>
+
+  <form enctype="multipart/form-data" method="post" action="{% url 'ibs:enviar-ibs' %}">
+        {%  csrf_token %}
+
+     <input type="text" name="nome" placeholder="Informe o nome da empresa" class="form-control" style="margin: 5px;">
+      <br />
+
+       <input type="number"
+              name="receitas-garantidores" placeholder="Informe a receita financeira dos ativos garantidores(provisões técnicas)."
+              class="form-control" style="margin: 5px;">
+      <br />
+
+     <label for="receitas">Selecione o arquivo de receitas:</label>
+     <input type="file" id="receitas" name="receitas"><br>
+
+     <label for="despesas">Selecione o arquivo de despesas:</label>
+       <input type="file" id="despesas" name="despesas"><br>
+
+        <input type="submit" value="Enviar" class="btn btn-lg btn-primary">
+    </form>
+
+      {% if msg %} {{msg }} {% endif %}
+
+  </div>
+     {% if empresa %}
+    <hr  />
+    <div class="jumbotron">
+        <h1>  {{empresa.nome }} </h1>
+
+    {% if empresa.resumos and empresa.resumos|length > 0 %}
+    <h3> Cálculo por média de crédito  </h3>
+        <table class="table table-bordered table-dark bg-dark table-striped" style="width: 100%; padding: 5%;">
+            <thead>
+                <tr>
+                    <th> Município </th>
+                    <th> Código do serviço </th>
+                    <th> valor </th>
+                    <th> Crédito município </th>
+
+                    <th> Base de cálculo </th>
+                    <th> IBS (17,7%) </th>
+                    <th> CBS (8,8%)</th>
+                    <th> IVA DUAL </th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for resumo in empresa.resumos %}
+                    <tr>
+                        <td> {{resumo.municipio }} </td>
+                        <td> {{resumo.codigo_servico }} - 26.50% </td>
+                        <td> {{resumo.valor }} </td>
+                        <td> {{resumo.credito_municipio }} </td>
+                        <td> {{resumo.base_calculo }} </td>
+                        <td> {{resumo.ibs }} </td>
+                        <td> {{resumo.cbs }} </td>
+                        <td> {{resumo.iva }} </td>
+                    </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+            <tfoot>
+                    <tr>
+                        <td colspan = "5" > Receita financeira dos ativos garantidores(Impostos): </td>
+                        <td > {{receitas_garantidores_calculada_ibs}} </td >
+                        <td > {{receitas_garantidores_calculada_cbs}} </td >
+                        <td > {{receitas_garantidores_calculada_iva_dual}} </td >
+                    </tr>
+
+                    <tr>
+                        <td colspan="5">Total de cálculos : </td>
+                        <td> {{empresa.total_ibs}} </td>
+                        <td> {{empresa.total_cbs}} </td>
+                        <td> {{empresa.total_iva}} </td>
+                    </tr>
+
+
+
+            </tfoot>
+
+        </table>
+        {% endif %}
+
+    </div>
+
+
+
+
+{% endif %}
+
+
+
+</main>
+
+
+
+
+{% endblock %}

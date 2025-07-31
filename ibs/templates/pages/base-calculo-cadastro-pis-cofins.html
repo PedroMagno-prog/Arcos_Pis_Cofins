@@ -1,0 +1,81 @@
+{% extends 'pages/base.html' %}
+
+{% block  main_content %}
+
+
+<div class="jumbotron">
+    <div class="container">
+        <h3> Vincular conta PIS/COFINS </h3>
+    </div>
+</div>
+
+
+<main role="main" class="container" >
+
+  <div class="jumbotron">
+      <p class="lead"> Formulário de cadastro.  </p>
+
+      <form  method="post" action="{% url 'ibs:cadastrar-conta-base-pis-cofins' %}">
+        {%  csrf_token %}
+          <label  for="conta"> Número da conta </label>
+                <input type="text" name="conta" id="conta" class="form-control" />
+
+          <label for="descricao" > Descrição </label>
+              <input type="text" name="descricao" id="descricao" class="form-control" />
+
+          <br />
+          <input type="submit" value="Enviar" class="btn btn-lg btn-primary">
+    </form>
+      <br />
+
+            <div class="float-right"><a href="{% url 'ibs:carregar-contas-base-calculo'  codigo=1%}"
+                                  role="button" class="btn  btn-lg btn-success"> Exibir contas </a>
+            </div><br />
+
+  </div>
+
+       {% if msg %}
+      <div class="alert alert-warning alert-dismissible fade show" role="alert">
+           <strong> {{msg  }} </strong>
+              <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+       </div>
+      {% endif %}
+
+         {% if  contas or contas|length > 0 %}
+    <div class="jumbotron">
+     <table width="100%" class=" table table-light table-striped table-bordered">
+        <thead align="center">
+                <tr>
+                    <th> Código </th>
+                    <th> Conta </th>
+                    <th> Descrição </th>
+                </tr>
+        </thead>
+                   <tbody align="center">
+                     {%for conta in contas %}
+                     <tr >
+                         <td> {{conta.codigo }}</td>
+                         <td> {{conta.conta }}</td>
+                         <td> {{conta.descricao }}</td>
+
+                     </tr>
+
+                     {% endfor %}
+
+                   </tbody>
+
+       </table>
+
+    {% endif %}
+
+
+  </div>
+
+</main>
+
+
+
+
+{% endblock %}

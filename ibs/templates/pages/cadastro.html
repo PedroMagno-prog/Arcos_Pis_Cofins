@@ -1,0 +1,52 @@
+{% extends 'pages/base.html' %}
+
+{% block  main_content %}
+
+
+<div class="jumbotron">
+    <div class="container">
+        <h3> Registro de usuário no sistema. </h3>
+    </div>
+</div>
+<div class="container">
+    <form method="POST" action="{% url 'ibs:cadastrar' %}">
+        {% csrf_token %}
+
+        <div class="form-group">
+         <label for="Nome"> {{form.nome.label }} </label>
+          {{form.nome}}
+        </div>
+
+        <div class="form-group">
+         <label for="Email">    {{form.email.label }} </label>
+        {{form.email}}
+        </div>
+
+        <div class="form-group">
+         <label for="Senha"> {{form.senha.label }} </label>
+        {{form.senha}}
+        </div>
+
+        <div class="form-group">
+         <label for="Senha"> {{form.confSenha.label }} </label>
+        {{form.confSenha}}
+        </div>
+
+
+        <input type="submit" value="Cadastrar" class="btn btn-primary"/>
+    </form>
+    <br />
+    {% if msg %}
+      <div class="alert alert-primary alert-dismissible fade show" role="alert">
+           <strong> {{msg  }} </strong>
+              <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+       </div>
+      {% endif %}
+
+    <hr />
+</div>
+
+
+{% endblock %}

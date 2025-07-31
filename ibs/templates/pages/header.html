@@ -1,0 +1,104 @@
+{%  load static %}
+<nav class="navbar navbar-expand-md navbar-dark fixed-top bg-dark">
+  <a class="navbar-brand" href="#"> FISCAL - Apuração mensal </a>
+  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault" aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="Toggle navigation">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+
+  <div class="collapse navbar-collapse" id="navbarsExampleDefault">
+    <ul class="navbar-nav mr-auto">
+      <li class="nav-item dropdown">
+        <a class="nav-link dropdown-toggle" href="#" id="dropdown01" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Usuários</a>
+        <div class="dropdown-menu" aria-labelledby="dropdown01">
+          <a class="dropdown-item" href="{% url 'ibs:cadastro' %}">Cadastrar </a>
+          <a class="dropdown-item" href="{% url 'ibs:lista' %}">Listar </a>
+        </div>
+
+
+      </li>
+
+
+        <li class="nav-item dropdown">
+        <a class="nav-link dropdown-toggle" href="#" id="dropdown02" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Importação</a>
+        <div class="dropdown-menu" aria-labelledby="dropdown02">
+          <a class="dropdown-item"  href="{% url 'ibs:cadastro-balancete' %}" >Balancetes </a>
+          <a class="dropdown-item" href="{% url 'ibs:cadastro-relatorio' %}">Relatórios </a>
+          <a class="dropdown-item" href="{% url 'ibs:lista-balancetes' %}">Exibir balancetes e relatórios </a>
+        </div>
+
+        <li class="nav-item dropdown">
+        <a class="nav-link dropdown-toggle" href="#" id="dropdown03" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Impostos</a>
+        <div class="dropdown-menu" aria-labelledby="dropdown03">
+          <a class="dropdown-item" href="{% url 'ibs:cadastro-pis-cofins' %}">PIS/COFINS </a>
+          <a class="dropdown-item" href="">IRPJ/CSLL </a>
+        </div>
+
+
+      <li class="nav-item dropdown">
+        <a class="nav-link dropdown-toggle" href="#" id="dropdown04" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Vincular Conta </a>
+        <div class="dropdown-menu" aria-labelledby="dropdown04">
+          <a class="dropdown-item" href="{% url 'ibs:cadastro-conta-base-pis-cofins' %}">PIS/COFINS </a>
+          <a class="dropdown-item" href="{% url 'ibs:cadastro-conta-base-irpj-csll' %}">IRPJ/CSLL </a>
+        </div>
+
+      </li>
+
+      <li>
+       <a class="nav-link" href="{% url 'ibs:home' %}">Home </a>
+      </li>
+    </ul>
+  </div>
+
+
+  <div class="navbar-collapse collapse w-100 order-3 dual-collapse2">
+        <ul class="navbar-nav ml-auto">
+            <li class="nav-item">
+                <button  type="button" data-toggle="modal" class="btn btn-outline-light" data-target="#modalLogin"
+                             id="myInput" data-backdrop="static"> login </button>
+            </li>
+        </ul>
+    </div>
+</nav>
+
+
+<div class="modal" id="modalLogin" role="dialog">
+    <div class="modal-dialog">
+
+      <!-- Modal content-->
+      <div class="modal-content">
+            <form method="post" action="{% url 'ibs:login' %}">
+        <div class="modal-header">
+          <h4 class="modal-title">Login </h4>
+          <button type="button" class="close" data-dismiss="modal">&times;</button>
+        </div>
+        <div class="modal-body">
+
+               {% csrf_token %}
+
+             <label  for="email"> E-mail</label>
+                <input type="text" name="email" id="email" class="form-control" />
+
+             <label for="senha" > Senha </label>
+                <input type="password" name="senha" id="senha" class="form-control" />
+
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-outline-dark">Login</button>
+          <button type="button" class="btn btn-outline-dark" data-dismiss="modal">Fechar </button>
+            <br />
+        </div>
+
+                 {% if msg %}
+      <div class="alert alert-primary alert-dismissible fade show" role="alert">
+           <strong> {{msg  }} </strong>
+              <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+       </div>
+      {% endif %}
+   </form>
+      </div>
+
+    </div>
+  </div>
+  </div>

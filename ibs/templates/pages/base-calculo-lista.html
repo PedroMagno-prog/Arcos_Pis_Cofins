@@ -1,0 +1,152 @@
+{% extends 'pages/base.html' %}
+
+{% block  main_content %}
+
+
+<div class="jumbotron">
+    <div class="container">
+        <h3> Controle da base de cálculo. </h3>
+    </div>
+</div>
+
+
+
+
+<main role="main" class="container">
+
+  <div class="jumbotron">
+      <p class="lead"> Exibindo a base de cálculo de todos os meses. </p>
+
+      {% if bases_calculo or bases_calculo|length > 0 %}
+    <table width="100%" class=" table table-striped table-light table-sm table-bordered">
+        <thead>
+          <tr align="center">
+              <th>Código </th>
+              <th>Ano </th>
+              <th>Mês </th>
+              <th>Adicionar calculo</th>
+          </tr>
+        </thead>
+        <tbody>
+        {%for base_calculo in bases_calculo %}
+         <tr align="center">
+             <td> {{base_calculo.codigo}} </td>
+             <td> {{base_calculo.ano}} </td>
+             <td> {{base_calculo.mes}} </td>
+             <td> <button  type="button" data-toggle="modal" class="btn btn-warning" data-target="#exampleModal"
+                             id="myInput"  data-whatever="{{base_calculo.codigo}}"> + </button> &nbsp;</td>
+         </tr>
+
+        <td colspan="4">
+               <table width="100%" class=" table table-dark table-striped">
+        <thead align="center">
+                <tr>
+                    <th> Código </th>
+                    <th> Conta </th>
+                    <th> Descrição </th>
+                    <th> Operação </th>
+                </tr>
+        </thead>
+                   <tbody align="center">
+                     {%for conta in base_calculo.contas %}
+                     <tr >
+                         <td> {{conta.codigo }}</td>
+                         <td> {{conta.conta }}</td>
+                         <td> {{conta.descricao }}</td>
+                         <td> <a href="{% url 'ibs:conta-base-calculo-remover' codigo=conta.codigo %}" role="button" class="btn btn-danger"
+                         onclick="return window.confirm('Deseja realmente excluir ?');"> Remover </a></td>
+                     </tr>
+
+                     {% endfor %}
+
+                   </tbody>
+
+
+   </table>
+        </td>
+
+ {% endfor %}
+
+
+        </tbody>
+
+    </table>
+
+{% else %}
+    <p> Nenhuma base cálculo cadastrada. </p>
+{% endif %}
+
+
+<hr />
+      {% if msg %}
+      <div class="alert alert-warning alert-dismissible fade show" role="alert">
+           <strong> {{msg  }} </strong>
+              <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+       </div>
+      {% endif %}
+
+      <!-- Modal -->
+      <!-- Modal -->
+  <div class="modal" id="exampleModal" role="dialog">
+    <div class="modal-dialog">
+
+      <!-- Modal content-->
+      <div class="modal-content">
+            <form method="post" action="{% url 'ibs:conta-base-calculo-cadastrar' %}">
+        <div class="modal-header">
+          <h4 class="modal-title">Adicionar conta</h4>
+          <button type="button" class="close" data-dismiss="modal">&times;</button>
+        </div>
+        <div class="modal-body">
+
+               {% csrf_token %}
+
+            Código
+          <input type="hidden" id="base_calculo_codigo" name="base_calculo_codigo" readonly>
+
+             <label  for="conta"> Número da conta </label>
+                <input type="text" name="conta" id="conta" class="form-control" />
+
+             <label for="descricao" > Descrição </label>
+                <input type="text" name="descricao" id="descricao" class="form-control" />
+
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-primary">Salvar</button>
+          <button type="button" class="btn btn-danger" data-dismiss="modal">Close</button>
+        </div>
+   </form>
+      </div>
+
+    </div>
+  </div>
+  </div>
+
+
+<!-- Jumbotron termina aqui -->
+</div>
+</main>
+
+
+<script type="text/javascript">
+       $(document).ready( function(){
+        $('#exampleModal').on('show.bs.modal', function (event) {
+            var button = $(event.relatedTarget) // Button that triggered the modal
+            console.log(button);
+             var recipient = button.data('whatever') // Extract info from data-* attributes
+             console.log(recipient);
+             var modal = $(this)
+             modal.find('#base_calculo_codigo').val(recipient);
+            });
+        });
+    </script>
+
+
+</div>
+
+
+
+
+{% endblock %}

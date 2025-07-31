@@ -1,0 +1,99 @@
+{% extends 'pages/base.html' %}
+
+{% block  main_content %}
+
+
+<div class="jumbotron">
+    <div class="container">
+        <h3> Relatório </h3>
+    </div>
+</div>
+
+
+<main role="main" class="container">
+
+  <div class="jumbotron">
+      <p class="lead"> Importação de relatório </p>
+
+  <form enctype="multipart/form-data" method="post" action="{% url 'ibs:cadastrar-relatorio' %}">
+        {%  csrf_token %}
+
+          <div class="form-row">
+            <div class="col">
+       <select name="ano" id="ano" class="form-control">
+          <option value=""> Selecione o ano </option>
+          <option value="2024"> 2024 </option>
+          <option value="2025"> 2025 </option>
+          <option value="2026"> 2026 </option>
+          <option value="2027"> 2027 </option>
+          <option value="2028"> 2028 </option>
+            </select>
+            </div>
+
+
+
+            <div class="col" style="padding-bottom:1%;">
+                <select name="mes" id="mes" class="form-control">
+          <option value=""> Selecione o mês </option>
+          <option value="1"> Janeiro </option>
+          <option value="2"> Fevereiro </option>
+          <option value="3"> Março </option>
+          <option value="4"> Abril </option>
+          <option value="5"> Maio </option>
+          <option value="6"> Junho </option>
+          <option value="7"> Julho </option>
+          <option value="8"> Agosto </option>
+          <option value="9"> Setembro </option>
+          <option value="10"> Outubro </option>
+          <option value="11"> Novembro </option>
+          <option value="12"> Dezembro </option>
+       </select>
+            </div>
+
+        </div>
+
+
+        <div class="form-row">
+            <div class="col" style="padding-bottom: 1%">
+          <select name="tipo" id="tipo" class="form-control">
+              <option value=""> Selecione o tipo de relatório </option>
+               <option value="1"> SINPAG </option>
+               <option value="2"> SINPAGAC </option>
+              <option value="3"> Salvados/Vendidos </option>
+               <option value="4"> Recuperados </option>
+          </select>
+          </div>
+
+            <div class="col">
+              <input type="file" id="balancete" name="relatorio"><br>
+            </div>
+
+        </div>
+           <div class="form-row">
+               <div class="col col-sm-6">
+                <input type="submit" value="Enviar" class="btn btn-lg btn-primary form-control">
+
+               </div>
+            </div>
+
+     </form>
+         <br />
+
+     {% if msg %}
+      <div class="alert alert-primary alert-dismissible fade show" role="alert">
+           <strong> {{msg  }} </strong>
+              <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+       </div>
+      {% endif %}
+
+  </div>
+
+
+</main>
+
+
+
+
+{% endblock %}

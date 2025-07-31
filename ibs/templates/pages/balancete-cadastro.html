@@ -1,0 +1,63 @@
+{% extends 'pages/base.html' %}
+
+{% block  main_content %}
+
+
+<div class="jumbotron">
+    <div class="container">
+        <h3> Entrada para Balancetes de PIS - COFINS </h3>
+    </div>
+</div>
+
+
+<main role="main" class="container">
+
+  <div class="jumbotron">
+      <p class="lead"> Entrada de Balancete (PIS/COFINS) </p>
+
+  <form enctype="multipart/form-data" method="post" action="{% url 'ibs:cadastrar-balancete' %}">
+        {%  csrf_token %}
+      <label for="ano"> Selecione o Ano : </label>
+      <select name="ano" id="ano">
+          <option value="2024"> 2024 </option>
+          <option value="2025"> 2025 </option>
+          <option value="2026"> 2026 </option>
+       </select>
+
+      <br />
+      <br />
+     <label for="mes"> Selecione o Mês : </label>
+      <select name="mes" id="mes">
+          <option value="1"> Janeiro </option>
+          <option value="2"> Fevereiro </option>
+          <option value="3"> Março </option>
+          <option value="4"> Abril </option>
+          <option value="5"> Maio </option>
+          <option value="6"> Junho </option>
+          <option value="7"> Julho </option>
+          <option value="8"> Agosto </option>
+          <option value="9"> Setembro </option>
+          <option value="10"> Outubro </option>
+          <option value="11"> Novembro </option>
+          <option value="12"> Dezembro </option>
+       </select>
+
+         <br />
+      <br />
+     <label for="balancete">Selecione o Balancete :</label>
+       <input type="file" id="balancete" name="balancetes"><br>
+
+        <input type="submit" value="Enviar" class="btn btn-lg btn-primary">
+    </form>
+
+      {% if msg %} {{msg }} {% endif %}
+
+  </div>
+
+
+</main>
+
+
+
+
+{% endblock %}

@@ -1,0 +1,345 @@
+{% extends 'pages/base.html' %}
+
+{% block  main_content %}
+
+
+<div class="jumbotron">
+    <div class="container">
+        <h3> PIS-COFINS </h3>
+    </div>
+</div>
+<div class="container" style="padding-bottom:10%;">
+    <h3> Formulário de cálculo do PIS-COFINS</h3>
+    <br />
+    <form method="POST" action="{% url 'ibs:carregar-dados-pis-cofins' %}">
+
+        {% csrf_token %}
+
+        <div class="form-row">
+            <div class="col">
+       <select name="ano" id="ano" class="form-control">
+          <option value=""> Selecione o ano </option>
+          <option value="2024"> 2024 </option>
+          <option value="2025"> 2025 </option>
+          <option value="2026"> 2026 </option>
+          <option value="2027"> 2027 </option>
+          <option value="2028"> 2028 </option>
+            </select>
+            </div>
+
+
+
+            <div class="col">
+                <select name="mes" id="mes" class="form-control">
+          <option value=""> Selecione o mês </option>
+          <option value="1"> Janeiro </option>
+          <option value="2"> Fevereiro </option>
+          <option value="3"> Março </option>
+          <option value="4"> Abril </option>
+          <option value="5"> Maio </option>
+          <option value="6"> Junho </option>
+          <option value="7"> Julho </option>
+          <option value="8"> Agosto </option>
+          <option value="9"> Setembro </option>
+          <option value="10"> Outubro </option>
+          <option value="11"> Novembro </option>
+          <option value="12"> Dezembro </option>
+       </select>
+            </div>
+        <div class="col">
+            <input type="submit" value="Cadastrar" class="btn btn-primary form-control"/>
+           </div>
+        </div>
+    </form>
+    <br />
+    {% if msg %}
+      <div class="alert alert-primary alert-dismissible fade show" role="alert">
+           <strong> {{msg  }} </strong>
+              <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+       </div>
+      {% endif %}
+
+    <hr />
+
+     {% if dados %}
+            <h3> Apuração do PIS - COFINS </h3>
+            <p>Ano : {{dados.ano }}  Mês -  {{ dados.mes }}</p>
+           <h3 align="center"> Relatórios </h3>
+
+     <table width="100%" class=" table table-dark table-striped  table-bordered">
+        <thead align="center">
+                <tr>
+                    <th> Relatório</th>
+                    <th> Ano </th>
+                    <th> Mês </th>
+                    <th> Soma vr_mod </th>
+                    <th> Soma vr_cos_ced </th>
+                    <th> Dif Soma vr_mod - vr_cos_ced </th>
+
+                </tr>
+        </thead>
+                   <tbody align="center">
+                   {%  if  dados.relatorio_sinpag %}
+                    <tr>
+                            <td>SINPAG </td>
+                            <td> {{dados.relatorio_sinpag.ano }} </td>
+                            <td> {{dados.relatorio_sinpag.mes }} </td>
+                            <td> {{dados.relatorio_sinpag.soma_vr_mov }} </td>
+                            <td> {{dados.relatorio_sinpag.soma_vr_cos_ced }} </td>
+                            <td> {{dados.relatorio_sinpag.dif_soma_cos_ced_vr_mov}} </td>
+
+                    </tr>
+                   {% endif %}
+
+                   </tbody>
+
+       </table>
+
+
+      <table width="100%" class=" table table-dark table-striped  table-bordered">
+        <thead align="center">
+                <tr>
+                    <th> Relatório</th>
+                    <th> Ano </th>
+                    <th> Mês </th>
+                    <th> vr_mov </th>
+                </tr>
+        </thead>
+                   <tbody align="center">
+
+                   {%  if  dados.relatorio_sinpagac %}
+                    <tr>
+                            <td>SINPAGAC </td>
+                            <td> {{dados.relatorio_sinpagac.ano }} </td>
+                            <td> {{dados.relatorio_sinpagac.mes }} </td>
+                            <td> {{dados.relatorio_sinpagac.soma_vr_mov}}</td>
+                    </tr>
+                   {% endif %}
+
+                   </tbody>
+
+       </table>
+
+
+      <table width="100%" class=" table table-dark table-striped  table-bordered">
+        <thead align="center">
+                <tr>
+                    <th> Relatório</th>
+                    <th> Ano </th>
+                    <th> Mês </th>
+                    <th> Soma vr mov </th>
+
+                </tr>
+        </thead>
+                   <tbody align="center">
+                   {%  if  dados.relatorio_salvados_vendidos %}
+                    <tr>
+                            <td>Rel. Salvados Vendidos </td>
+                            <td> {{dados.relatorio_salvados_vendidos.ano }} </td>
+                            <td> {{dados.relatorio_salvados_vendidos.mes }} </td>
+                            <td> {{dados.relatorio_salvados_vendidos.soma_vr_mov }} </td>
+                    </tr>
+
+                   {% endif %}
+
+                   </tbody>
+
+       </table>
+
+     <table width="100%" class=" table table-dark table-striped  table-bordered">
+        <thead align="center">
+                <tr>
+                    <th> Relatório</th>
+                    <th> Ano </th>
+                    <th> Mês </th>
+                    <th> Dif soma, Baixa - Res - Salv </th>
+
+                </tr>
+        </thead>
+                   <tbody align="center">
+                   {%  if  dados.relatorio_recuperados %}
+                    <tr>
+                            <td>Rel. Recuperados </td>
+                            <td> {{dados.relatorio_recuperados.ano }} </td>
+                            <td> {{dados.relatorio_recuperados.mes }} </td>
+                            <td> {{dados.relatorio_recuperados.dif_soma_baixa_ind_res_salv }} </td>
+                    </tr>
+
+                   {% endif %}
+
+                   </tbody>
+
+       </table>
+
+    <h3> Balancete </h3>
+
+    <table width="100%" class=" table table-dark table-striped  table-bordered">
+        <thead align="center">
+                <tr>
+                    <th> Código </th>
+                    <th> Ano </th>
+                    <th> Mês </th>
+                </tr>
+        </thead>
+                   <tbody align="center">
+                   <tr>
+                       <td>{{dados.balancete.codigo}}</td>
+                       <td>{{dados.balancete.ano}}</td>
+                       <td>{{dados.balancete.mes}}</td>
+
+                   </tr>
+
+                   {% if dados.balancete.contas %}
+                   <tr>
+                        <table width="100%" class=" table table-light table-striped  table-bordered">
+
+                    <thead align="center">
+                <tr>
+                    <th> Conta do razão </th>
+                    <th> Descrição </th>
+                    <th> Movimento </th>
+
+                </tr>
+        </thead>
+                    {% for conta in dados.balancete.contas %}
+
+                   <tbody align="center">
+                     <tr>
+                         <td> {{conta.conta_do_razao}} </td>
+                         <td> {{conta.periodo}} </td>
+                         <td> {{conta.movimento}} </td>
+                     </tr>
+
+                     {% endfor %}
+
+                   </tbody>
+           </table>
+
+                   </tr>
+                  {% endif %}
+                   </tbody>
+       </table>
+
+    <form method="post" action="{% url 'ibs:calcular-pis-cofins' %}">
+
+         {% csrf_token %}
+
+          <div class="form-row" style="padding-bottom: 10px;">
+
+              {% if ano %}
+              <input type="hidden" value="{{ano}}" name="ano" />
+              <input type="hidden"  value="{{mes}}" name="mes" />
+              {% endif %}
+
+            <div class="col">
+                <input type="text" name="retencao-pis" placeholder="Retenção PIS" class="form-control" />
+            </div>
+
+              <div class="col">
+                <input type="text" name="compensacao-pis" placeholder="Compensação PIS" class="form-control"/>
+            </div>
+
+          </div>
+
+          <div class="form-row" style="padding-bottom: 10px;">
+            <div class="col" >
+                <input type="text" name="retencao-cofins" placeholder="Retenção Cofins" class="form-control" />
+            </div>
+
+              <div class="col">
+                <input type="text" name="compensacao-cofins" placeholder="Compensação Cofins" class="form-control"/>
+            </div>
+
+          </div>
+
+        <div class="form-row" style="padding-bottom: 5px;">
+            <div class="col col-sm-6">
+                 <input type="submit" value="Calcular" class="btn btn-lg btn-primary form-control">
+            </div>
+        </div>
+
+
+    </form>
+
+    {% if dados.base %}
+        <h3 align="center"> Apuração Mensal </h3>
+
+
+      <table width="100%" class=" table table-dark table-striped  table-bordered">
+        <thead align="center">
+                <tr>
+                    <th> PIS </th>
+                    <th> PIS retido </th>
+                    <th> PIS compensado </th>
+                    <th> Pis a recolher </th>
+                    <th> PIS Darf </th>
+
+                </tr>
+        </thead>
+                   <tbody align="center">
+                   {%  if  dados.base %}
+                    <tr>
+                        <td>{{dados.base.pis }} </td>
+                        <td>{{dados.base.pis_retido }} </td>
+                        <td>{{dados.base.compensacao_pis }} </td>
+                        <td>{{dados.base.pis_recolher }} </td>
+                        <td>{{dados.base.pis_darf }} </td>
+
+                    </tr>
+
+                   {% endif %}
+
+                   </tbody>
+
+       </table>
+
+
+     <table width="100%" class=" table table-dark table-striped  table-bordered">
+        <thead align="center">
+                <tr>
+                    <th> COFINS </th>
+                    <th> COFINS retido </th>
+                    <th> COFINS compensado </th>
+                    <th> COFINS a recolher </th>
+                    <th> COFINS Darf </th>
+
+                </tr>
+        </thead>
+                   <tbody align="center">
+                   {%  if  dados.base %}
+                    <tr>
+                        <td>{{dados.base.cofins }} </td>
+                        <td>{{dados.base.cofins_retido }} </td>
+                        <td>{{dados.base.compensacao_cofins }} </td>
+                        <td>{{dados.base.cofins_recolher }} </td>
+                        <td>{{dados.base.cofins_darf }} </td>
+
+                    </tr>
+
+                   {% endif %}
+
+                   </tbody>
+
+       </table>
+
+    {% endif %}
+
+     {% if msg_1 %}
+      <div class="alert alert-primary alert-dismissible fade show" role="alert">
+           <strong> {{msg_1  }} </strong>
+              <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+       </div>
+      {% endif %}
+
+    {% endif %}
+
+
+
+</div>
+
+
+{% endblock %}
