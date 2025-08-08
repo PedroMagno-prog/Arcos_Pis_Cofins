@@ -217,15 +217,29 @@ class ContaBaseCalculoPisCofins(models.Model):
     conta = models.CharField(null=False, max_length=255)
     descricao = models.CharField(null=False, max_length=255)
     data_cadastro = models.DateField(auto_now_add=True)
+    vigencia = models.BooleanField(default=True)
 
+
+    class TipoConta(models.IntegerChoices):
+        # - CREDORA - negativo
+        CREDORA = 1
+        # + DEVEDORA - positivo
+        DEVEDORA = 2
+        # + CONTA MISTA, não considerar no calculo
+        CREDORA_DEVEDORA = 3
+
+    tipo_conta = models.IntegerField(
+        choices=TipoConta.choices,
+        default=TipoConta.CREDORA
+    )
 
     def __str__(self):
-        return f'{self.codigo}, {self.conta}, {self.descricao}, {self.data_cadastro}'
+        return f'{self.codigo}, {self.conta}, {self.descricao}, {self.data_cadastro}, ' \
+               f'{self.tipo_conta}, {self.vigencia}'
 
     def __repr__(self):
-        return f'{self.codigo}, {self.conta}, {self.descricao}, {self.data_cadastro}'
-
-
+        return f'{self.codigo}, {self.conta}, {self.descricao}, {self.data_cadastro}, ' \
+               f'{self.tipo_conta}, {self.vigencia}'
     pass
 
 

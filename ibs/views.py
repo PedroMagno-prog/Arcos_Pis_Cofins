@@ -480,6 +480,7 @@ def cadastrar_base_calculo_pis_cofins(request):
         if request.method == "POST":
             conta = request.POST['conta']
             descricao = request.POST['descricao']
+            tipo_conta = request.POST['tipo']
 
             if not conta or not descricao:
                 msg = 'Erro, por favor preencha todos os campos.'
@@ -489,6 +490,7 @@ def cadastrar_base_calculo_pis_cofins(request):
         conta_pis_cofins = ContaBaseCalculoPisCofins()
         conta_pis_cofins.conta = conta
         conta_pis_cofins.descricao = descricao
+        conta_pis_cofins.tipo_conta = int(tipo_conta)
         msg = 'Base de cálculo adicionada com sucesso.'
         conta_pis_cofins.save()
 

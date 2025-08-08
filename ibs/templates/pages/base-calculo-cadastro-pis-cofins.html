@@ -24,6 +24,15 @@
               <input type="text" name="descricao" id="descricao" class="form-control" />
 
           <br />
+          <label> Tipo Conta </label>
+          <br />
+          <label>
+              <input type="radio" name="tipo" value="1" checked>&nbsp; Credora &nbsp;
+              <input type="radio" name="tipo" value="2"> &nbsp; Devedora
+              <input type="radio" name="tipo" value="3"> &nbsp; (Credora/Devedora)
+          </label>
+          <br />
+          <br />
           <input type="submit" value="Enviar" class="btn btn-lg btn-primary">
     </form>
       <br />
@@ -51,6 +60,8 @@
                     <th> Código </th>
                     <th> Conta </th>
                     <th> Descrição </th>
+                    <th> Vigência </th>
+                    <th> Tipo Conta </th>
                 </tr>
         </thead>
                    <tbody align="center">
@@ -59,6 +70,21 @@
                          <td> {{conta.codigo }}</td>
                          <td> {{conta.conta }}</td>
                          <td> {{conta.descricao }}</td>
+                         <td> {% if conta.vigencia == True %}
+                                Ativa
+                             {% else %}
+                             Inativa
+                             {% endif %}
+                         </td>
+                         <td>
+                             {% if conta.tipo_conta ==  1 %}
+                             Credora
+                             {% elif conta.tipo_conta == 2 %}
+                             Devedora
+                             {% else %}
+                              Credora/Devedora
+                             {% endif %}
+                             </td>
 
                      </tr>
 
