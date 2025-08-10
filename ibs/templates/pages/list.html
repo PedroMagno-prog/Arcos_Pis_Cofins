@@ -1,0 +1,47 @@
+{% extends 'pages/base.html' %}
+
+{% block  main_content %}
+
+<div class="jumbotron">
+    <div class="container">
+        <h3> Relação de Usuários do sistema. </h3>
+    </div>
+</div>
+<div class="container">
+
+{% if usuarios or usuarios|length > 0 %}
+    <table width="100%" class=" table table-striped table-dark table-sm table-bordered">
+        <thead>
+          <tr align="center">
+              <th>Código </th>
+              <th>Nome </th>
+              <th>Email </th>
+              <th>Operações</th>
+          </tr>
+        </thead>
+        <tbody>
+        {%for usuario in usuarios %}
+         <tr align="center">
+             <td> {{usuario.codigo}} </td>
+             <td> {{usuario.nome}} </td>
+             <td> {{usuario.email}} </td>
+             <td> <a href="#"  class="btn btn-warning"> Atualizar </a> &nbsp; | &nbsp;
+             <a href="#" class="btn btn-danger"> Remover </a> </td>
+
+         </tr>
+
+        {% endfor %}
+
+        </tbody>
+
+    </table>
+{% else %}
+    <p> Nenhum usuário cadastrado. </p>
+    {% endif %}
+<hr />
+</div>
+
+
+
+
+{% endblock %}
