@@ -26,7 +26,7 @@ SECRET_KEY = 'g5$@i6eyc4*m8kf0l2=j^5i=^w=_21_)oped(vd8ae!o^8&x%-'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 VERSION='0.0.0'
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["*"]
 
 
 # Application definition
@@ -76,12 +76,13 @@ WSGI_APPLICATION = 'projeto.wsgi.application'
 # https://docs.djangoproject.com/en/2.2/ref/settings/#databases
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': config('DB_NAME'),
-        'USER' : config('DB_USER'),
-        'PORT' : config('DB_PORT', default='5432'),
-        'PASSWORD': config('DB_PASSWORD')
+    "default": {
+        "ENGINE": "django.db.backends.postgresql",  # modern alias
+        "NAME": os.getenv("RDS_DB_NAME"),
+        "USER": os.getenv("RDS_USERNAME"),
+        "PASSWORD": os.getenv("RDS_PASSWORD"),
+        "HOST": os.getenv("RDS_HOSTNAME"),
+        "PORT": os.getenv("RDS_PORT", "5432"),
     }
 }
 
@@ -123,3 +124,5 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/2.2/howto/static-files/
 
 STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATICFILES_DIRS = []
