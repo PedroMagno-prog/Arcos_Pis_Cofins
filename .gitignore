@@ -9,7 +9,7 @@ venv/
 env/
 virtualenv/
 .venv/
-.env/
+.env
 
 # Arquivos de Banco de Dados
 *.sqlite3
