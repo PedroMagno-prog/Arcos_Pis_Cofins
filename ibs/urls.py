@@ -7,9 +7,9 @@ urlpatterns = [
     path('', home_page,name='home'),
     path('login/', login, name='login'),
     path('Cadastro/', cadastro_page, name='cadastro'),
+
     path('Cadastro-pis-cofins/', cadastro_pis_cofins, name='cadastro-pis-cofins'),
     path('Carregar-dados-pis-cofins/', carregar_dados_pis_cofins, name='carregar-dados-pis-cofins'),
-
     path('Calcular-pis-cofins/', calcular_pis_cofins, name='calcular-pis-cofins'),
 
     path('Cadastrar/', cadastrar, name='cadastrar'),
