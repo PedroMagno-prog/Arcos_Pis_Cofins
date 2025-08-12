@@ -199,6 +199,10 @@ def carregar_dados_pis_cofins(request):
                 msg = 'Informe o mês do balancete.'
                 return render(request, CADASTRO_PIS_COFINS_PAGE, {'msg': msg})
 
+                # Salvando o ano e mês na sessão
+                request.session['ano_selecionado'] = ano
+                request.session['mes_selecionado'] = mes
+
             ano = int(ano)
             mes = int(mes)
             dados = montar_dados_tela_pis_cofins(ano, mes, None)
@@ -756,6 +760,10 @@ def calcular_pis_cofins(request):
             ano = request.POST['ano']
             mes = request.POST['mes']
 
+            # Salvando o ano e mês na sessão
+            request.session['ano_selecionado'] = ano
+            request.session['mes_selecionado'] = mes
+
             print('ANO BALANCETE : '  + str(ano))
             print('MES BALANCETE : '  + str(mes))
             print('Retenção PIS :' + retencao_pis)
@@ -843,12 +851,19 @@ def calcular_pis_cofins(request):
 
                 dados = montar_dados_tela_pis_cofins(base.ano, base.mes, base)
                 print(base)
-
-                return render(request, CADASTRO_PIS_COFINS_PAGE,
-                                  { 'dados' :  dados, 'msg_1': 'Dados gerados com sucesso.'})
+                context = {
+                    'dados': dados,
+                    'msg_1': 'Dados gerados com sucesso.',
+                    # Lemos da sessão para garantir que os campos sejam pré-preenchidos
+                    'ano_selecionado': request.session.get('ano_selecionado'),
+                    'mes_selecionado': request.session.get('mes_selecionado'),
+                    # Também passamos 'ano' e 'mes' para compatibilidade com o template
+                    'ano': int(request.session.get('ano_selecionado', 0)),
+                    'mes': int(request.session.get('mes_selecionado', 0)),
+                }
+                return render(request, CADASTRO_PIS_COFINS_PAGE, context)
             else:
                 raise Exception('Balancete não encontrado.')
-
 
         else:
             raise Exception('Erro, use POST para formulários ')
@@ -856,8 +871,13 @@ def calcular_pis_cofins(request):
 
     except Exception as ex:
         print(ex.args)
-        return render(request, CADASTRO_PIS_COFINS_PAGE,
-                      {'msg_1': 'Erro, ' + str(ex.args)})
+        context = {
+            'msg_1': 'Erro, ' + str(ex.args),
+            'ano_selecionado': request.session.get('ano_selecionado'),
+            'mes_selecionado': request.session.get('mes_selecionado'),
+            'ano': int(request.session.get('ano_selecionado', 0)),
+            'mes': int(request.session.get('mes_selecionado', 0)),
+        }
+        return render(request, CADASTRO_PIS_COFINS_PAGE, context)
 
     pass
-
