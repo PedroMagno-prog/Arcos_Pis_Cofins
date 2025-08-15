@@ -428,9 +428,31 @@ def convert_mes_texto(mes):
     pass
 
 
-def soma_contas_balancete(contas_balancetes):
+# Função para calcular a soma dos movimentos de acordo com o tipo
+# de conta informada, credora, devedora ou cred/dev.
+def calcular_movimento_credora_devedora(tipo_conta, conta):
+    soma = 0
+
+    if tipo_conta == 1:
+        if conta.movimento < 0:
+            soma = soma + conta.movimento
+        pass
+    elif tipo_conta == 2:
+        if conta.movimento > 0:
+            soma = soma + conta.movimento
+        pass
+    elif tipo_conta == 3:
+        soma = soma + conta.movimento
+        pass
+
+    return soma
+    pass
+
+# Função para calcular a soma dos contas do balancete pelo tipo de conta informado pela
+# base de calculo informado no PIS / COFINS.
+def soma_contas_balancete(tipo_conta, contas_balancetes):
     soma = 0
     for conta in contas_balancetes:
-        soma = soma + conta.movimento
+        soma = calcular_movimento_credora_devedora(tipo_conta, conta)
     return soma
     pass
