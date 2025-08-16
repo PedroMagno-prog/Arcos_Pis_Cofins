@@ -1,7 +1,9 @@
 from django.shortcuts import render, loader, HttpResponse, redirect
+from django.http import HttpResponse, Http404
+import csv
 from django.urls import reverse_lazy, reverse
 from .forms import UsuarioCadastroForm
-from .models import UsuarioModel
+from .models import UsuarioModel, BaseCalculoPisCofins
 from .const import *
 import hmac
 from .util import *
@@ -86,7 +88,9 @@ def montar_dados_tela_pis_cofins(ano, mes, base):
 
             if contas_balancetes:
                 conta_balancete = contas_balancetes[0]
-                conta_balancete.movimento = soma_contas_balancete(contas_balancetes=contas_balancetes)
+                # Soma de contas do balancete -> informar o tipo movimento da base de calculo, e as contas do balancete.
+                conta_balancete.movimento = soma_contas_balancete(base_calculo.tipo_conta,
+                                                                  contas_balancetes=contas_balancetes)
                 conta_balancete.movimento = locale_br(conta_balancete.movimento)
                 contas.append(conta_balancete)
 
@@ -753,10 +757,10 @@ def cadastrar_relatorio(request):
 def calcular_pis_cofins(request):
     try:
         if request.method == 'POST':
-            retencao_pis = request.POST['retencao-pis']
-            compensacao_pis = request.POST['compensacao-pis']
-            retencao_cofins = request.POST['retencao-cofins']
-            compensacao_cofins = request.POST['compensacao-cofins']
+            retencao_pis = request.POST['retencao-pis'] or '0'
+            compensacao_pis = request.POST['compensacao-pis'] or '0'
+            retencao_cofins = request.POST['retencao-cofins'] or '0'
+            compensacao_cofins = request.POST['compensacao-cofins'] or '0'
             ano = request.POST['ano']
             mes = request.POST['mes']
 
@@ -769,9 +773,12 @@ def calcular_pis_cofins(request):
             print('Retenção PIS :' + retencao_pis)
             print('Compensação PIS : ' + compensacao_pis)
 
+            """
+            Limpeza de Código:
+            adicionado -> or '0' <- no request.Post direto
             if retencao_pis is None or len(retencao_pis) <= 0:
                 retencao_pis = 0
-
+            
             if compensacao_pis is None or len(compensacao_pis) <= 0:
                 compensacao_pis = 0
 
@@ -780,6 +787,7 @@ def calcular_pis_cofins(request):
 
             if compensacao_cofins is None or len(compensacao_cofins) <= 0:
                 compensacao_cofins = 0
+            """
 
             base = BaseCalculoPisCofins()
             base.ano = int(ano)
@@ -835,19 +843,32 @@ def calcular_pis_cofins(request):
                 base.cofins_recolher = base.cofins - (base.cofins_retido + base.compensacao_cofins)
                 base.cofins_darf = base.cofins_recolher
 
+                # --- Etapa 2: Formatar os valores UMA VEZ, usando os dados numéricos de 'base' ---
+                dados_para_sessao_e_tela = {
+                    'pis_valor_str': locale_br(base.pis),
+                    'pis_recolher_str': locale_br(base.pis_recolher),
+                    'pis_darf_str': locale_br(base.pis_darf),
+                    'pis_retido_str': locale_br(base.pis_retido),
+                    'pis_compensado_str': locale_br(base.compensacao_pis),
+                    'cofins_valor_str': locale_br(base.cofins),
+                    'cofins_recolher_str': locale_br(base.cofins_recolher),
+                    'cofins_darf_str': locale_br(base.cofins_darf),
+                    'cofins_retido_str': locale_br(base.cofins_retido),
+                    'cofins_compensado_str': locale_br(base.compensacao_cofins)
+                }
+                request.session['ultimo_calculo_pis_cofins'] = dados_para_sessao_e_tela
 
-                base.pis = locale_br(base.pis)
-                base.pis_recolher = locale_br(base.pis_recolher)
-                base.pis_retido = locale_br(base.pis_retido)
-                base.pis_darf  = locale_br(base.pis_darf)
-                base.compensacao_pis = locale_br(base.compensacao_pis)
-
-                base.cofins = locale_br(base.cofins)
-                base.cofins_recolher = locale_br(base.cofins_recolher)
-                base.cofins_retido = locale_br(base.cofins_retido)
-                base.compensacao_cofins = locale_br(base.compensacao_cofins)
-                base.cofins_darf = locale_br(base.cofins_darf)
-
+                # --- Etapa 3: ATUALIZAR o objeto 'base' com as strings para o template ---
+                base.pis = dados_para_sessao_e_tela['pis_valor_str']
+                base.pis_recolher = dados_para_sessao_e_tela['pis_recolher_str']
+                base.pis_darf = dados_para_sessao_e_tela['pis_darf_str']
+                base.pis_retido = dados_para_sessao_e_tela['pis_retido_str']
+                base.compensacao_pis = dados_para_sessao_e_tela['pis_compensado_str']
+                base.cofins = dados_para_sessao_e_tela['cofins_valor_str']
+                base.cofins_recolher = dados_para_sessao_e_tela['cofins_recolher_str']
+                base.cofins_darf = dados_para_sessao_e_tela['cofins_darf_str']
+                base.cofins_retido = dados_para_sessao_e_tela['cofins_retido_str']
+                base.compensacao_cofins = dados_para_sessao_e_tela['cofins_compensado_str']
 
                 dados = montar_dados_tela_pis_cofins(base.ano, base.mes, base)
                 print(base)
@@ -881,3 +902,98 @@ def calcular_pis_cofins(request):
         return render(request, CADASTRO_PIS_COFINS_PAGE, context)
 
     pass
+
+# Novas Funções de Export CSV 13/08
+def exportar_calculo_da_sessao_csv(request):
+    """
+    Exporta para CSV o último cálculo de PIS/COFINS armazenado na sessão.
+    """
+    # Pega os dados da sessão. Se não existir, retorna um dicionário vazio.
+    dados_calculo = request.session.get('ultimo_calculo_pis_cofins', {})
+
+    if not dados_calculo:
+        return HttpResponse("Nenhum cálculo recente encontrado para exportar.", status=404)
+
+    response = HttpResponse(content_type='text/csv; charset=utf-8')
+    response['Content-Disposition'] = 'attachment; filename="apuracao_pis_cofins.csv"'
+
+    fieldnames = ['Nome', 'Valor', 'Retido', 'Compensado', 'a Recolher', 'Darf']
+    writer = csv.DictWriter(response, fieldnames=fieldnames, delimiter=';')
+
+    writer.writeheader()
+    writer.writerow({
+        'Nome': 'PIS', 'Valor': dados_calculo.get('pis_valor_str'), 'Retido': dados_calculo.get('pis_retido_str'),
+        'Compensado': dados_calculo.get('pis_compensado_str'), 'a Recolher': dados_calculo.get('pis_recolher_str'),
+        'Darf': dados_calculo.get('pis_darf_str')
+    })
+    writer.writerow({
+        'Nome': 'COFINS', 'Valor': dados_calculo.get('cofins_valor_str'), 'Retido': dados_calculo.get('cofins_retido_str'),
+        'Compensado': dados_calculo.get('cofins_compensado_str'), 'a Recolher': dados_calculo.get('cofins_recolher_str'),
+        'Darf': dados_calculo.get('cofins_darf_str')
+    })
+
+    return response
+
+
+def export_relatorios_consolidados_csv(request, ano, mes):
+    """
+    Gera um CSV consolidado com todos os relatórios usados no cálculo.
+    """
+    try:
+        # Passo 1: Chamar sua função existente para obter todos os dados.
+        # Passamos 'None' para o 'base' pois não precisamos dos cálculos finais aqui.
+        dados_relatorios_obj = montar_dados_tela_pis_cofins(ano, mes, None)
+    except Exception as e:
+        # Se montar_dados_tela falhar (ex: Balancete não encontrado), retorne um erro amigável.
+        raise Http404(f"Não foi possível gerar os dados para os relatórios: {e}")
+
+    # Passo 2: Transformar o dicionário de objetos em uma lista de dicionários (formato de linha).
+    linhas_csv = []
+
+    # Extrai os objetos do dicionário principal
+    # Usamos .get() para evitar erros se uma chave não existir
+    relatorios = {
+        'SINPAGAC': dados_relatorios_obj.get('relatorio_sinpagac'),
+        'SINPAG': dados_relatorios_obj.get('relatorio_sinpag'),
+        'SALV_VEND': dados_relatorios_obj.get('relatorio_salvados_vendidos'),
+        'RECUPERADOS': dados_relatorios_obj.get('relatorio_recuperados'),
+        'BALANCETE': dados_relatorios_obj.get('balancete')  # Trataremos este de forma especial
+    }
+
+    for tipo, obj in relatorios.items():
+        if not obj:
+            continue
+
+        linha = {'Tipo': tipo, 'Ano': ano, 'Mês': mes}
+
+        # Convertendo o objeto Django em um dicionário para o CSV
+        # '__dict__' contém os campos do modelo.
+        # Nós removemos '_state' que é um atributo interno do Django.
+        dados_obj = obj.__dict__
+        dados_obj.pop('_state', None)
+
+        linha.update(dados_obj)
+        linhas_csv.append(linha)
+
+    if not linhas_csv:
+        return HttpResponse("Nenhum dado de relatório para exportar.", status=204)
+
+    # Passo 3: Estratégia de cabeçalho dinâmico (exatamente como planejado)
+    header_set = set()
+    for linha in linhas_csv:
+        header_set.update(linha.keys())
+
+    # Organizando as colunas para melhor leitura
+    colunas_fixas = ['Tipo', 'Ano', 'Mês']
+    colunas_dinamicas = sorted([h for h in header_set if h not in colunas_fixas])
+    fieldnames = colunas_fixas + colunas_dinamicas
+
+    # Passo 4: Preparar a resposta e escrever o CSV
+    response = HttpResponse(content_type='text/csv', charset='utf-8')  # Adicionado charset utf-8
+    response['Content-Disposition'] = f'attachment; filename="relatorios_consolidados_{ano}_{mes}.csv"'
+
+    writer = csv.DictWriter(response, fieldnames=fieldnames, delimiter=';')
+    writer.writeheader()
+    writer.writerows(linhas_csv)
+
+    return response
