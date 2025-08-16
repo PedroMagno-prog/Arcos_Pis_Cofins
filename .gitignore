@@ -10,6 +10,7 @@ env/
 virtualenv/
 .venv/
 .env
+deploy_env/
 
 # Arquivos de Banco de Dados
 *.sqlite3
