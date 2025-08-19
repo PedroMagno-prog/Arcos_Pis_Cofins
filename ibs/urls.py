@@ -45,7 +45,6 @@ urlpatterns = [
     path('Cadastrar-Conta-Calculo-Base-irpj-csll/', cadastrar_base_calculo_irpj_csll,
          name='cadastrar-conta-base-irpj-csll'),
 
-
+    path('exportar-calculo/', exportar_calculo_da_sessao_csv, name='exportar_calculo_da_sessao'),
+    path('export/relatorios/<int:ano>/<int:mes>/', export_relatorios_consolidados_csv, name='export_relatorios_consolidados_csv')
 ]
-
-
