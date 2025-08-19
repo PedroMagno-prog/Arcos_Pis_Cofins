@@ -263,7 +263,18 @@
 
     {% if dados.base %}
         <h3 align="center"> Apuração Mensal </h3>
-
+        <div class="row my-3">
+            <div class="col-md-6">
+            <a href="{% url 'ibs:exportar_calculo_da_sessao' %}" class="btn btn-success">
+                Exportar Resultado para CSV
+            </a>
+        </div>
+            <div class="col-md-6 mb-2">
+                <a href="{% url 'ibs:export_relatorios_consolidados_csv' ano=ano mes=mes %}" class="btn btn-info btn-block">
+                    Exportar Relatórios (CSV)
+                </a>
+            </div>
+        </div>
 
       <table width="100%" class=" table table-dark table-striped  table-bordered">
         <thead align="center">
