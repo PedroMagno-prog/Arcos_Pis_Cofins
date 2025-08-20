@@ -81,6 +81,7 @@ def montar_dados_tela_pis_cofins(ano, mes, base):
         base_calculo_pis = ContaBaseCalculoPisCofins.objects.all()
 
         contas = []
+        add_movimento_conta_base_calculo = []
 
         for base_calculo in base_calculo_pis:
             contas_balancetes = ContaBalancete.objects.filter(conta_do_razao=base_calculo.conta,
@@ -91,10 +92,18 @@ def montar_dados_tela_pis_cofins(ano, mes, base):
                 # Soma de contas do balancete -> informar o tipo movimento da base de calculo, e as contas do balancete.
                 conta_balancete.movimento = soma_contas_balancete(base_calculo.tipo_conta,
                                                                   contas_balancetes=contas_balancetes)
+                add_movimento_conta_base_calculo.append(conta_balancete.movimento)
                 conta_balancete.movimento = locale_br(conta_balancete.movimento)
                 contas.append(conta_balancete)
 
         balancete.contas = contas
+        base_calculo = 0
+        for valor in add_movimento_conta_base_calculo:
+            base_calculo += valor
+
+        base_calculo = locale_br(base_calculo)
+
+        print('Base de calculo :', base_calculo)
 
         relatorio_sinpag.soma_vr_cos_ced = locale_br(relatorio_sinpag.soma_vr_cos_ced)
         relatorio_sinpag.soma_vr_mov = locale_br(relatorio_sinpag.soma_vr_mov)
@@ -113,13 +122,13 @@ def montar_dados_tela_pis_cofins(ano, mes, base):
             dados = dict(relatorio_sinpagac=relatorio_sinpagac, relatorio_sinpag=relatorio_sinpag,
                          relatorio_recuperados=relatorio_recuperados,
                          relatorio_salvados_vendidos=relatorio_salvados_vendidos,
-                         balancete=balancete, ano=ano, mes=convert_mes_texto(mes), base=base)
+                         balancete=balancete, ano=ano, mes=convert_mes_texto(mes), base=base, base_calculo=base_calculo)
             return dados
 
         dados = dict(relatorio_sinpagac=relatorio_sinpagac, relatorio_sinpag=relatorio_sinpag,
                      relatorio_recuperados=relatorio_recuperados,
                      relatorio_salvados_vendidos=relatorio_salvados_vendidos,
-                     balancete=balancete, ano=ano, mes=convert_mes_texto(mes))
+                     balancete=balancete, ano=ano, mes=convert_mes_texto(mes), base_calculo=base_calculo)
 
         return dados
     else:
@@ -773,22 +782,6 @@ def calcular_pis_cofins(request):
             print('Retenção PIS :' + retencao_pis)
             print('Compensação PIS : ' + compensacao_pis)
 
-            """
-            Limpeza de Código:
-            adicionado -> or '0' <- no request.Post direto
-            if retencao_pis is None or len(retencao_pis) <= 0:
-                retencao_pis = 0
-            
-            if compensacao_pis is None or len(compensacao_pis) <= 0:
-                compensacao_pis = 0
-
-            if retencao_cofins is None or len(retencao_cofins) <= 0:
-                retencao_cofins = 0
-
-            if compensacao_cofins is None or len(compensacao_cofins) <= 0:
-                compensacao_cofins = 0
-            """
-
             base = BaseCalculoPisCofins()
             base.ano = int(ano)
             base.mes = int(mes)
@@ -803,16 +796,17 @@ def calcular_pis_cofins(request):
                 contas = []
 
                 for base_calculo in base_calculo_pis:
-                    conta_balancete = ContaBalancete.objects.filter(conta_do_razao=base_calculo.conta,
-                                                                    balancete_id=balancete.codigo).first()
-                    print(conta_balancete)
-                    print("-----------")
-                    if conta_balancete:
+                    contas_balancetes = ContaBalancete.objects.filter(conta_do_razao=base_calculo.conta,
+                                                                      balancete_id=balancete.codigo).all()
+
+                    if contas_balancetes:
+                        conta_balancete = contas_balancetes[0]
+                        # Soma de contas do balancete -> informar o tipo movimento da base de calculo, e as contas do balancete.
+                        conta_balancete.movimento = soma_contas_balancete(base_calculo.tipo_conta,
+                                                                          contas_balancetes=contas_balancetes)
                         contas.append(conta_balancete)
 
-                print("CODIGO DO BALANCETE : " + str(balancete.codigo))
                 balancete.contas = contas
-
                 soma_receita = calcular_soma_receitas(balancete.contas)
                 base.soma_receita_balancete = soma_receita
 
@@ -843,7 +837,7 @@ def calcular_pis_cofins(request):
                 base.cofins_recolher = base.cofins - (base.cofins_retido + base.compensacao_cofins)
                 base.cofins_darf = base.cofins_recolher
 
-                # --- Etapa 2: Formatar os valores UMA VEZ, usando os dados numéricos de 'base' ---
+                # base.pis = locale_br(base.pis)  {possível simplificação!}
                 dados_para_sessao_e_tela = {
                     'pis_valor_str': locale_br(base.pis),
                     'pis_recolher_str': locale_br(base.pis_recolher),
@@ -857,8 +851,7 @@ def calcular_pis_cofins(request):
                     'cofins_compensado_str': locale_br(base.compensacao_cofins)
                 }
                 request.session['ultimo_calculo_pis_cofins'] = dados_para_sessao_e_tela
-
-                # --- Etapa 3: ATUALIZAR o objeto 'base' com as strings para o template ---
+                # base.pis = locale_br(base.pis)  {possível simplificação!}
                 base.pis = dados_para_sessao_e_tela['pis_valor_str']
                 base.pis_recolher = dados_para_sessao_e_tela['pis_recolher_str']
                 base.pis_darf = dados_para_sessao_e_tela['pis_darf_str']

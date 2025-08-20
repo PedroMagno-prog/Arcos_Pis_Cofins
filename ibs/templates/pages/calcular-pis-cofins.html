@@ -188,12 +188,13 @@
                        <td>{{dados.balancete.mes}}</td>
 
                    </tr>
+          </tbody>
+    </table>
 
-                   {% if dados.balancete.contas %}
-                   <tr>
-                        <table width="100%" class=" table table-light table-striped  table-bordered">
+           {% if dados.balancete.contas %}
+          <table width="100%" class="table table-light table-striped  table-bordered">
 
-                    <thead align="center">
+         <thead align="center">
                 <tr>
                     <th> Conta do razão </th>
                     <th> Descrição </th>
@@ -201,24 +202,25 @@
 
                 </tr>
         </thead>
-                    {% for conta in dados.balancete.contas %}
-
-                   <tbody align="center">
+             <tbody align="center">
+             {% for conta in dados.balancete.contas %}
                      <tr>
                          <td> {{conta.conta_do_razao}} </td>
                          <td> {{conta.periodo}} </td>
                          <td> {{conta.movimento}} </td>
                      </tr>
+             {% endfor %}
+             </tbody>
 
-                     {% endfor %}
-
-                   </tbody>
-           </table>
-
-                   </tr>
-                  {% endif %}
-                   </tbody>
+        <tfoot align="center">
+        <tr>
+            <td colspan="2"> Base de cálculo </td>
+             <td> {{dados.base_calculo}} </td>
+        </tr>
+        </tfoot>
        </table>
+
+    {% endif %}
 
     <form method="post" action="{% url 'ibs:calcular-pis-cofins' %}">
 
@@ -263,18 +265,14 @@
 
     {% if dados.base %}
         <h3 align="center"> Apuração Mensal </h3>
-        <div class="row my-3">
-            <div class="col-md-6">
-            <a href="{% url 'ibs:exportar_calculo_da_sessao' %}" class="btn btn-success">
-                Exportar Resultado para CSV
-            </a>
-        </div>
-            <div class="col-md-6 mb-2">
-                <a href="{% url 'ibs:export_relatorios_consolidados_csv' ano=ano mes=mes %}" class="btn btn-info btn-block">
-                    Exportar Relatórios (CSV)
-                </a>
-            </div>
-        </div>
+        <div class="d-flex justify-content-center my-3">
+        <a href="{% url 'ibs:exportar_calculo_da_sessao' %}" class="btn btn-success mr-2">
+           Exportar Apuração (CSV)
+        </a>
+        <a href="{% url 'ibs:export_relatorios_consolidados_csv' ano=ano mes=mes %}" class="btn btn-info">
+            Exportar Relatórios (CSV)
+        </a>
+    </div>
 
       <table width="100%" class=" table table-dark table-striped  table-bordered">
         <thead align="center">
