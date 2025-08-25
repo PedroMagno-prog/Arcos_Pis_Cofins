@@ -453,6 +453,6 @@ def calcular_movimento_credora_devedora(tipo_conta, conta):
 def soma_contas_balancete(tipo_conta, contas_balancetes):
     soma = 0
     for conta in contas_balancetes:
-        soma = calcular_movimento_credora_devedora(tipo_conta, conta)
+        soma += calcular_movimento_credora_devedora(tipo_conta, conta)
     return soma
     pass
