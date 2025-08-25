@@ -77,6 +77,7 @@ def montar_dados_tela_pis_cofins(ano, mes, base):
 
     if balancete:
         balancete = Balancete.objects.filter(ano=balancete.ano, mes=balancete.mes).latest('versao')
+        print('Codigo do balancete : ', balancete.codigo)
 
         base_calculo_pis = ContaBaseCalculoPisCofins.objects.all()
 
@@ -86,12 +87,14 @@ def montar_dados_tela_pis_cofins(ano, mes, base):
         for base_calculo in base_calculo_pis:
             contas_balancetes = ContaBalancete.objects.filter(conta_do_razao=base_calculo.conta,
                                                             balancete_id=balancete.codigo).all()
+            print('----' * 10)
+            print(contas_balancetes)
+            print('----' * 10)
 
             if contas_balancetes:
                 conta_balancete = contas_balancetes[0]
                 # Soma de contas do balancete -> informar o tipo movimento da base de calculo, e as contas do balancete.
-                conta_balancete.movimento = soma_contas_balancete(base_calculo.tipo_conta,
-                                                                  contas_balancetes=contas_balancetes)
+                conta_balancete.movimento = soma_contas_balancete(base_calculo.tipo_conta, contas_balancetes=contas_balancetes)
                 add_movimento_conta_base_calculo.append(conta_balancete.movimento)
                 conta_balancete.movimento = locale_br(conta_balancete.movimento)
                 contas.append(conta_balancete)

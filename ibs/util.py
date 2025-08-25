@@ -2,10 +2,13 @@ from .models import *
 import csv
 import locale
 import io
+import _sha3
 import hashlib
 
 def criptografar_senha(senha: str) -> str:
-    """Return SHA3-256 hex digest of the given password."""
+    """
+    Return SHA3-256 hex digest of the given password.
+    """
     return hashlib.sha3_256(senha.encode()).hexdigest()
     pass
 
@@ -27,7 +30,6 @@ def calcular_aliquota_ibs(codigo_servico=float):
         return 26.5
     pass
 
-#
 def convert_valor(valor) :
     # --- Início da Alteração ---
     # 1. Verificamos se o valor, sem espaços, é um hífen.
