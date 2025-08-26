@@ -2,7 +2,6 @@ from .models import *
 import csv
 import locale
 import io
-import _sha3
 import hashlib
 
 def criptografar_senha(senha: str) -> str:
@@ -105,7 +104,7 @@ def calcular_somatorio_receitas(receitas):
 
         resumo.valor = valor_total
         resumos.append(resumo)
-        valor_total =0
+        valor_total = 0
 
     total_resumos = 0
     for resumo in resumos:
@@ -429,32 +428,20 @@ def convert_mes_texto(mes):
     return None
     pass
 
-
-# Função para calcular a soma dos movimentos de acordo com o tipo
-# de conta informada, credora, devedora ou cred/dev.
-def calcular_movimento_credora_devedora(tipo_conta, conta):
-    soma = 0
-
-    if tipo_conta == 1:
-        if conta.movimento < 0:
-            soma = soma + conta.movimento
-        pass
-    elif tipo_conta == 2:
-        if conta.movimento > 0:
-            soma = soma + conta.movimento
-        pass
-    elif tipo_conta == 3:
-        soma = soma + conta.movimento
-        pass
-
-    return soma
-    pass
-
-# Função para calcular a soma dos contas do balancete pelo tipo de conta informado pela
-# base de calculo informado no PIS / COFINS.
+# Função para calcular a soma do movimento da conta_base_calculo a partir do balancete
+"""
+    Tipo de Conta (C/D/C-D) filtra as somas:
+        Se a conta-base é credora, somas positivas são zeradas
+        Se a conta-base é devedora, somas negativas são zeradas
+        Somas mistas não são filtradas.
+"""
 def soma_contas_balancete(tipo_conta, contas_balancetes):
     soma = 0
-    for conta in contas_balancetes:
-        soma += calcular_movimento_credora_devedora(tipo_conta, conta)
-    return soma
+    for conta in contas_balancetes: # varre o balancete procurando pelas contas de mesmo ID (conta-base)
+        soma += conta.movimento
+    if tipo_conta == 1 and soma > 0: # Credora
+        return 0
+    elif tipo_conta == 2 and soma < 0: # Devedoras
+        return 0
+    return soma # Mistas, Credoras negativas e Devedoras positivas
     pass

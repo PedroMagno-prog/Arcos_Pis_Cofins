@@ -73,12 +73,13 @@ def montar_dados_tela_pis_cofins(ano, mes, base):
     relatorio_sinpagac = RelatorioSINPAGAC.objects.filter(ano=ano, mes=mes).first()
     relatorio_salvados_vendidos = RelatorioSalvadosVendidosNovos.objects.filter(ano=ano, mes=mes).first()
     relatorio_recuperados = RelatorioRecuperadosNovo.objects.filter(ano=ano, mes=mes).first()
-    balancete = Balancete.objects.filter(ano=ano, mes=mes).first()
+    balancete = Balancete.objects.filter(ano=ano, mes=mes).first() # Último balancete cadastrado
 
     if balancete:
         balancete = Balancete.objects.filter(ano=balancete.ano, mes=balancete.mes).latest('versao')
         print('Codigo do balancete : ', balancete.codigo)
 
+        # Todas as contas cadastradas. Seus ID, Descrição e Tipo.
         base_calculo_pis = ContaBaseCalculoPisCofins.objects.all()
 
         contas = []
