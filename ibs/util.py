@@ -428,20 +428,35 @@ def convert_mes_texto(mes):
     return None
     pass
 
-# Função para calcular a soma do movimento da conta_base_calculo a partir do balancete
-"""
-    Tipo de Conta (C/D/C-D) filtra as somas:
-        Se a conta-base é credora, somas positivas são zeradas
-        Se a conta-base é devedora, somas negativas são zeradas
-        Somas mistas não são filtradas.
-"""
+# Função para calcular a soma dos contas do balancete pelo tipo de conta informado pela
+# base de calculo informado no PIS / COFINS.
+def verificar_tipo_conta(tipo_conta, soma):
+
+    if tipo_conta == 1:
+        # CREDORA
+        if soma <= 0:
+            return soma
+        pass
+    elif tipo_conta == 2:
+        # DEVEDORA
+        if soma >= 0:
+            return soma
+        pass
+
+    elif tipo_conta == 3:
+        return soma
+        pass
+
+    return 0
+    pass
+
+# Função para calcular a soma dos contas do balancete pelo tipo de conta informado pela
+# base de calculo informado no PIS / COFINS.
 def soma_contas_balancete(tipo_conta, contas_balancetes):
     soma = 0
     for conta in contas_balancetes: # varre o balancete procurando pelas contas de mesmo ID (conta-base)
         soma += conta.movimento
-    if tipo_conta == 1 and soma > 0: # Credora
-        return 0
-    elif tipo_conta == 2 and soma < 0: # Devedoras
-        return 0
-    return soma # Mistas, Credoras negativas e Devedoras positivas
+
+    soma = verificar_tipo_conta(tipo_conta, soma)
+    return soma
     pass
