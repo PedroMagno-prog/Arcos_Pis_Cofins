@@ -2,7 +2,6 @@ from .models import *
 import csv
 import locale
 import io
-import _sha3
 import hashlib
 
 def criptografar_senha(senha: str) -> str:
