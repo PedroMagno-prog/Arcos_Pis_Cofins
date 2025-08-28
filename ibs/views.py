@@ -822,8 +822,8 @@ def calcular_pis_cofins(request):
                 dif_soma_receita_sinpag_sinpagac = base.soma_receita_balancete + (
                     relatorio_sinpag.dif_soma_cos_ced_vr_mov + relatorio_sinpagac.soma_vr_mov)
 
-                base_calculo = dif_soma_receita_sinpag_sinpagac - ( relatorio_recuperados.dif_soma_baixa_ind_res_salv + \
-                    relatorio_salvados_vendidos.soma_vr_mov)
+                base_calculo = (dif_soma_receita_sinpag_sinpagac - ( relatorio_recuperados.dif_soma_baixa_ind_res_salv + \
+                    relatorio_salvados_vendidos.soma_vr_mov)) * -1
 
                 print(dif_soma_receita_sinpag_sinpagac)
                 print(base_calculo)

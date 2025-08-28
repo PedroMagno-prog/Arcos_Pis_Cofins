@@ -583,11 +583,9 @@ class MovimentacaoRecuperadosNovo(models.Model):
         db_table = 'movimentacaorecuperadosnovo'
 
     codigo = models.AutoField(primary_key=True)
-    cod_cia = models.CharField(null=False, max_length=255)
+    tipo_sin = models.CharField(null=False, max_length=255)
     num_sin = models.CharField(null=False, max_length=255)
     cod_ramo = models.CharField(null=False, max_length=255)
-    dt_base = models.CharField(null=False, max_length=255)
-    num_apol = models.CharField(null=False, max_length=255)
     baixa_ind = models.FloatField(null=False, max_length=255, default= 0)
     baixa_salv = models.FloatField(null=False, max_length=255,default= 0)
     baixa_res = models.FloatField(null=False, max_length=255 , default= 0)
@@ -597,12 +595,10 @@ class MovimentacaoRecuperadosNovo(models.Model):
                                   null=True)
 
     def __str__(self):
-        return f'{self.codigo}, {self.cod_cia}, {self.num_sin}' \
-               f'{self.cod_ramo}, {self.dt_base}, {self.num_apol}, {self.baixa_ind}, {self.baixa_salv}, {self.baixa_res}'
+        return f'{self.codigo}, {self.tipo_sin},{self.cod_ramo}, {self.num_sin}, {self.baixa_ind}, {self.baixa_salv}, {self.baixa_res}'
 
     def __repr__(self):
-        return f'{self.codigo}, {self.cod_cia}, {self.num_sin}' \
-               f'{self.cod_ramo}, {self.dt_base}, {self.num_apol},{self.baixa_ind}, {self.baixa_salv}, {self.baixa_res}'
+        return f'{self.codigo}, {self.tipo_sin},{self.cod_ramo}, {self.num_sin}, {self.baixa_ind}, {self.baixa_salv}, {self.baixa_res}'
 
     pass
 
