@@ -305,12 +305,15 @@ def load_movimentos_relatorio_salvados_vendidos_novos(myfile):
     pass
 
 
+# Alteração no calculo somente tipo 209 e 210
 def calculos_salvados_vendidos_novos(movimentos):
     soma_vr_mov = 0
     for movimento in movimentos:
-        soma_vr_mov = soma_vr_mov + float(movimento.vr_mov)
-    return soma_vr_mov
 
+        if movimento.tipo_mov == '209' or movimento.tipo_mov == '210':
+            print(movimento.tipo_mov)
+            soma_vr_mov = soma_vr_mov + float(movimento.vr_mov)
+    return soma_vr_mov
 
 def calculos_salvados_vendidos(movimentos):
     soma_receita_baixa_positiva = 0
@@ -331,11 +334,9 @@ def load_movimentos_relatorio_recuperados_novo(myfile):
     next(reader, None)
     for row in reader:
             movimento = MovimentacaoRecuperadosNovo()
-            movimento.cod_cia = row[1]
-            movimento.dt_base = row[2]
+            movimento.tipo_sin = row[1]
+            movimento.num_sin = row[2]
             movimento.cod_ramo = row[4]
-            movimento.num_sin = row[5]
-            movimento.num_apol= row[6]
             movimento.baixa_ind = convert_valor(row[23])
             movimento.baixa_salv = convert_valor(row[26])
             movimento.baixa_res = convert_valor(row[27])
@@ -374,10 +375,10 @@ def calculos_recuperados_novos(movimentos):
     soma_baixa_res = 0
     soma_baixa_salv = 0
     for movimento in movimentos:
-         soma_baixa_ind = soma_baixa_ind + float(movimento.baixa_ind)
-         soma_baixa_res = soma_baixa_res + float(movimento.baixa_res)
-         print(soma_baixa_res)
-         soma_baixa_salv = soma_baixa_salv + float(movimento.baixa_salv)
+        if movimento.tipo_sin == '1':
+             soma_baixa_ind = soma_baixa_ind + float(movimento.baixa_ind)
+             soma_baixa_res = soma_baixa_res + float(movimento.baixa_res)
+             soma_baixa_salv = soma_baixa_salv + float(movimento.baixa_salv)
 
     print('Soma Baixa Ind', soma_baixa_ind)
     print('Soma Baixa Res', soma_baixa_res)
