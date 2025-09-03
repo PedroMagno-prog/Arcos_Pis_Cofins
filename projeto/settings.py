@@ -126,3 +126,6 @@ USE_TZ = True
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATICFILES_DIRS = []
+
+SESSION_COOKIE_AGE = 3600  # 1h
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
