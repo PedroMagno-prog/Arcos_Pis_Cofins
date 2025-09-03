@@ -32,6 +32,13 @@ class UsuarioCadastroForm(forms.Form):
                                 'class' :  'form-control'
                             }),)
 
+    precisa_trocar_senha = forms.BooleanField(
+        label="Trocar senha no primeiro acesso?",
+        required=False,
+        initial=True,   # por padrão já vem marcado
+        widget=forms.CheckboxInput(attrs={'class': 'form-check-input'})
+    )
+
 
     pass
 

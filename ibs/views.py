@@ -55,6 +55,10 @@ def login(request):
                 return render(request, LOGIN_PAGE,
                               {'msg_login': msg})
 
+            if usuario.precisa_trocar_senha:
+                criar_sessao(request, usuario)
+                return redirect("ibs:resetar-senha")
+
             print(usuario)
             criar_sessao(request, usuario)
             return redirect(reverse('ibs:home'))
@@ -160,6 +164,38 @@ def montar_dados_tela_pis_cofins(ano, mes, base):
         return dados
     else:
         raise Exception('Balancete não encontrado.')
+
+
+from django.contrib import messages
+
+@login_required_usuario
+def resetar_senha(request):
+    try:
+        if request.method == "POST":
+            nova_senha = request.POST.get("senha")
+            conf_senha = request.POST.get("confSenha")
+
+            if not nova_senha or not conf_senha:
+                messages.error(request, "Preencha os dois campos de senha.")
+            elif nova_senha != conf_senha:
+                messages.error(request, "As senhas não coincidem.")
+            else:
+                usuario_data = request.session.get("usuario")
+                usuario = UsuarioModel.objects.get(codigo=usuario_data["id"])
+                usuario.senha = criptografar_senha(nova_senha)
+                usuario.precisa_trocar_senha = False
+                usuario.save()
+                messages.success(request, "Senha alterada com sucesso.")
+                return redirect("ibs:home")
+
+        return render(request, "pages/resetar-senha.html")
+
+    except Exception as ex:
+        print(ex)
+        msg = ex.args
+        return render(request, RESETAR_SENHA_PAGE, {'msg': msg})
+
+
 
 @login_required_usuario
 def home_page(request):
@@ -302,6 +338,7 @@ def cadastrar(request):
                 usuario.email = form.cleaned_data['email']
                 usuario.perfil = form.cleaned_data['perfil']
                 usuario.senha = form.cleaned_data['senha']
+                usuario.precisa_trocar_senha = form.cleaned_data['precisa_trocar_senha']  # 👈 aqui
                 confSenha = form.cleaned_data['confSenha']
 
                 if usuario.nome is None or len(usuario.nome) <= 0:

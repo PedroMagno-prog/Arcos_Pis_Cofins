@@ -37,6 +37,13 @@
         {{form.confSenha}}
         </div>
 
+        <div class="form-check mt-3">
+          {{ form.precisa_trocar_senha }}
+          <label class="form-check-label" for="{{ form.precisa_trocar_senha.id_for_label }}">
+            {{ form.precisa_trocar_senha.label }}
+          </label>
+        </div>
+
 
         <input type="submit" value="Cadastrar" class="btn btn-primary"/>
     </form>

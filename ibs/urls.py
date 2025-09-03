@@ -8,6 +8,7 @@ urlpatterns = [
     path('login/', login, name='login'),
     path('logout/', logout, name='logout'),
     path('Cadastro/', cadastro_page, name='cadastro'),
+    path('resetar-senha/', resetar_senha, name='resetar-senha'),
 
     path('Cadastro-pis-cofins/', cadastro_pis_cofins, name='cadastro-pis-cofins'),
     path('Carregar-dados-pis-cofins/', carregar_dados_pis_cofins, name='carregar-dados-pis-cofins'),
