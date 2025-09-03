@@ -1,6 +1,6 @@
 from django.utils.translation import gettext_lazy as _
 from django import forms
-from .models import UsuarioModel
+from .models import UsuarioModel, Perfil
 
 
 class UsuarioCadastroForm(forms.Form):
@@ -15,6 +15,12 @@ class UsuarioCadastroForm(forms.Form):
                             widget=forms.TextInput(attrs={
                                 'class' :  'form-control'
                             }))
+
+    perfil = forms.ChoiceField(
+        choices=Perfil.choices,
+        label="Perfil",
+        widget=forms.Select(attrs={'class': 'form-control'})
+    )
 
     senha = forms.CharField(max_length=50, label='Senha ',
                             widget=forms.PasswordInput(attrs={

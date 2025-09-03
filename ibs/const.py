@@ -4,6 +4,7 @@ HOME_PAGE = 'pages/home.html'
 CADASTRO_PAGE = 'pages/cadastro.html'
 LISTA_PAGE = 'pages/list.html'
 CADASTRO_IBS_PAGE = 'pages/ibs-cadastro.html'
+LOGIN_PAGE = 'pages/login.html'
 
 CADASTRO_PIS_COFINS_PAGE = 'pages/calcular-pis-cofins.html'
 BALANCETE_CADASTRO_PAGE = 'pages/balancete-cadastro.html'
