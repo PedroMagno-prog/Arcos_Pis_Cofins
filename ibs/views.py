@@ -828,10 +828,10 @@ def calcular_pis_cofins(request):
                 print(dif_soma_receita_sinpag_sinpagac)
                 print(base_calculo)
 
-                base.pis_retido = float(retencao_pis)
-                base.compensacao_pis = float(compensacao_pis)
-                base.cofins_retido = float(retencao_cofins)
-                base.compensacao_cofins = float(compensacao_cofins)
+                base.pis_retido = float(retencao_pis.replace(",", "."))
+                base.compensacao_pis = float(compensacao_pis.replace(",", "."))
+                base.cofins_retido = float(retencao_cofins.replace(",", "."))
+                base.compensacao_cofins = float(compensacao_cofins.replace(",", "."))
 
                 base.pis = base_calculo * 0.0065
                 base.pis_recolher = base.pis - (base.pis_retido + base.compensacao_pis)
