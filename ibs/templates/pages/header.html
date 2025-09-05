@@ -11,13 +11,14 @@
 
   <div class="collapse navbar-collapse" id="navbarsExampleDefault">
     <ul class="navbar-nav mr-auto">
+        {% if request.session.usuario.perfil == "ADMIN" %}
       <li class="nav-item dropdown">
         <a class="nav-link dropdown-toggle" href="#" id="dropdown01" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Usuários</a>
         <div class="dropdown-menu" aria-labelledby="dropdown01">
           <a class="dropdown-item" href="{% url 'ibs:cadastro' %}">Cadastrar </a>
           <a class="dropdown-item" href="{% url 'ibs:lista' %}">Listar </a>
         </div>
-
+        {% endif %}
 
       </li>
 
@@ -54,55 +55,12 @@
   </div>
 
 
-  <div class="navbar-collapse collapse w-100 order-3 dual-collapse2">
+    <div class="navbar-collapse collapse w-100 order-3 dual-collapse2">
         <ul class="navbar-nav ml-auto">
             <li class="nav-item">
-                <button  type="button" data-toggle="modal" class="btn btn-outline-light" data-target="#modalLogin"
-                             id="myInput" data-backdrop="static"> login </button>
+                <p><a class="btn btn-secondary" href="{% url 'ibs:logout' %}" role="button"> Sair  &raquo;</a></p>
             </li>
         </ul>
     </div>
 </nav>
-
-
-<div class="modal" id="modalLogin" role="dialog">
-    <div class="modal-dialog">
-
-      <!-- Modal content-->
-      <div class="modal-content">
-            <form method="post" action="{% url 'ibs:login' %}">
-        <div class="modal-header">
-          <h4 class="modal-title">Login </h4>
-          <button type="button" class="close" data-dismiss="modal">&times;</button>
-        </div>
-        <div class="modal-body">
-
-               {% csrf_token %}
-
-             <label  for="email"> E-mail</label>
-                <input type="text" name="email" id="email" class="form-control" />
-
-             <label for="senha" > Senha </label>
-                <input type="password" name="senha" id="senha" class="form-control" />
-
-        </div>
-        <div class="modal-footer">
-          <button type="submit" class="btn btn-outline-dark">Login</button>
-          <button type="button" class="btn btn-outline-dark" data-dismiss="modal">Fechar </button>
-            <br />
-        </div>
-
-                 {% if msg %}
-      <div class="alert alert-primary alert-dismissible fade show" role="alert">
-           <strong> {{msg  }} </strong>
-              <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-          </button>
-       </div>
-      {% endif %}
-   </form>
-      </div>
-
-    </div>
-  </div>
   </div>

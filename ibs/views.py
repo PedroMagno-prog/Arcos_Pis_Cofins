@@ -10,28 +10,34 @@ from .util import *
 from django.db.models import Q
 from django.db.models import Max
 from hmac import compare_digest
+from functools import wraps
 
 
 def autenticar_usuario(request):
-    if request.session.get('usuario') is None:
-
+    print("autenticar_usuario")
+    if request.session.get('usuario') is not None:
         return True
-    pass
+    else:
+        print("usuario nao autenticado")
+        return False
+
 
 def criar_sessao(request, usuario):
-    request.session['usuario'] = dict(nome=usuario.nome, id=usuario.codigo)
+    request.session['usuario'] = dict(nome=usuario.nome, id=usuario.codigo, perfil=usuario.perfil)
+    request.session.set_expiry(3600) # expira a sessao de 1 hora
     request.session.modified = True
+    print("sessao criada pro usuario")
     pass
 
 def logout(request):
     try:
-        del request.session['usuario']
-        return render(request, HOME_PAGE,
-                      {'msg_login': 'Usuário deslogado com sucesso.'})
+        request.session.flush()
+        print("Usuário deslogado")
+        return redirect(reverse('ibs:login'))
 
     except Exception as ex:
         msg = ex.args
-        return render(request, HOME_PAGE, {'msg_login' : msg})
+        return render(request, LOGIN_PAGE, {'msg_login' : msg})
 
 def login(request):
     try:
@@ -44,28 +50,55 @@ def login(request):
 
             if not usuario:
                 msg = 'Usuario não cadastrado no sistema.'
-                return render(request, HOME_PAGE,
+                return render(request, LOGIN_PAGE,
                               {'msg_login': msg})
 
             if not compare_digest(usuario.senha, senha):
                 msg = 'Usuario e senha incorretos.'
-                return render(request, HOME_PAGE,
+                return render(request, LOGIN_PAGE,
                               {'msg_login': msg})
+
+            if usuario.precisa_trocar_senha:
+                criar_sessao(request, usuario)
+                return redirect("ibs:resetar-senha")
 
             print(usuario)
             criar_sessao(request, usuario)
-            return render(request, HOME_PAGE)
+            return redirect(reverse('ibs:home'))
 
 
         else:
             raise Exception('Erro, use POST para formulários')
 
     except Exception as ex:
-        return render(request, HOME_PAGE,
+        return render(request, LOGIN_PAGE,
                       {'msg_login': 'Erro no formulário preencha todos os campos.'
                               + str(ex.args)})
 
     pass
+
+
+def login_required_usuario(view_func):
+    @wraps(view_func)
+    def wrapper(request, *args, **kwargs):
+        usuario = request.session.get('usuario')
+        if not usuario or usuario.get('perfil') not in [Perfil.USUARIO, Perfil.ADMIN]:
+            return render(request, LOGIN_PAGE)
+        return view_func(request, *args, **kwargs)
+    return wrapper
+
+
+def login_required_admin(view_func):
+    @wraps(view_func)
+    def wrapper(request, *args, **kwargs):
+        usuario = request.session.get('usuario')
+        if not usuario:
+            return redirect('ibs:login')
+
+        if usuario.get('perfil') != Perfil.ADMIN:
+            return render(request, HOME_PAGE)
+        return view_func(request, *args, **kwargs)
+    return wrapper
 
 
 def montar_dados_tela_pis_cofins(ano, mes, base):
@@ -139,68 +172,97 @@ def montar_dados_tela_pis_cofins(ano, mes, base):
         raise Exception('Balancete não encontrado.')
 
 
+from django.contrib import messages
+
+@login_required_usuario
+def resetar_senha(request):
+    try:
+        if request.method == "POST":
+            nova_senha = request.POST.get("senha")
+            conf_senha = request.POST.get("confSenha")
+
+            if not nova_senha or not conf_senha:
+                messages.error(request, "Preencha os dois campos de senha.")
+            elif nova_senha != conf_senha:
+                messages.error(request, "As senhas não coincidem.")
+            else:
+                usuario_data = request.session.get("usuario")
+                usuario = UsuarioModel.objects.get(codigo=usuario_data["id"])
+                usuario.senha = criptografar_senha(nova_senha)
+                usuario.precisa_trocar_senha = False
+                usuario.save()
+                messages.success(request, "Senha alterada com sucesso.")
+                return redirect("ibs:home")
+
+        return render(request, "pages/resetar-senha.html")
+
+    except Exception as ex:
+        print(ex)
+        msg = ex.args
+        return render(request, RESETAR_SENHA_PAGE, {'msg': msg})
+
+
+
+@login_required_usuario
 def home_page(request):
     return render(request, HOME_PAGE)
     pass
 
+@login_required_usuario
+def login_page(request):
+    return render(request, LOGIN_PAGE)
 
+@login_required_admin
 def cadastro_page(request):
-    if autenticar_usuario(request):
-        return render(request, HOME_PAGE)
-
     form = UsuarioCadastroForm()
     return render(request, CADASTRO_PAGE, {'form': form})
-    pass
 
+@login_required_usuario
 def cadastro_ibs_page(request):
 
     return render(request, CADASTRO_IBS_PAGE)
     pass
 
-
+@login_required_usuario
 def cadastro_balancete(request):
     return render(request, BALANCETE_CADASTRO_PAGE)
     pass
-
+@login_required_usuario
 def cadastro_base_calculo_pis_cofins(request):
     return render(request, CADASTRO_BASE_CALCULO_PIS_COFINS_PAGE)
     pass
 
-
+@login_required_usuario
 def cadastro_base_calculo_irpj_csll(request):
     return render(request, CADASTRO_BASE_CALCULO_IRPJ_CSLL_PAGE)
     pass
 
-
+@login_required_usuario
 def cadastro_pis_cofins(request):
     return render(request, CADASTRO_PIS_COFINS_PAGE)
     pass
 
-
+@login_required_usuario
 def lista_base_calculo(request):
     return render(request)
     pass
 
-
+@login_required_usuario
 def lista_balancetes(request):
 
     return render(request, BALANCETE_LISTA_PAGE)
     pass
-
+@login_required_usuario
 def cadastro_relatorio(request):
     return render(request, CADASTRO_RELATORIO_PAGE)
     pass
 
-
+@login_required_admin
 def lista_page(request):
-    if autenticar_usuario(request):
-        return render(request, HOME_PAGE)
-
     usuarios = UsuarioModel.objects.all()
     return render(request, LISTA_PAGE, {'usuarios': usuarios})
-    pass
 
-
+@login_required_usuario
 def carregar_dados_pis_cofins(request):
     try:
         if request.method == 'POST':
@@ -238,7 +300,7 @@ def carregar_dados_pis_cofins(request):
 
     pass
 
-
+@login_required_usuario
 def carregar_contas_base_calculo(request, codigo):
     try:
         if codigo:
@@ -264,7 +326,7 @@ def carregar_contas_base_calculo(request, codigo):
         return render(request, request.path, {'msg' :  msg})
     pass
 
-
+@login_required_usuario
 def cadastrar(request):
     try:
         if request.method == 'POST':
@@ -273,7 +335,9 @@ def cadastrar(request):
                 usuario = UsuarioModel()
                 usuario.nome = form.cleaned_data['nome']
                 usuario.email = form.cleaned_data['email']
+                usuario.perfil = form.cleaned_data['perfil']
                 usuario.senha = form.cleaned_data['senha']
+                usuario.precisa_trocar_senha = form.cleaned_data['precisa_trocar_senha']  # 👈 aqui
                 confSenha = form.cleaned_data['confSenha']
 
                 if usuario.nome is None or len(usuario.nome) <= 0:
@@ -307,7 +371,7 @@ def cadastrar(request):
                                                'msg': msg})
     pass
 
-
+@login_required_usuario
 def enviar_ibs(request):
     try:
         if request.method == "POST":
@@ -393,7 +457,7 @@ def enviar_ibs(request):
         return render(request, CADASTRO_IBS_PAGE, {'msg':  'Erro no formulário preencha todos os campos.' + str(ex.args)})
     pass
 
-
+@login_required_usuario
 def cadastrar_balancete(request):
     try:
         if request.method == 'POST':
@@ -462,7 +526,7 @@ def cadastrar_balancete(request):
         return render(request, BALANCETE_CADASTRO_PAGE, {'msg':  'Erro no formulário preencha todos os campos.' + str(ex.args)})
         pass
 
-
+@login_required_usuario
 def listar_balancetes(request):
     try:
         if request.method == 'POST':
@@ -495,7 +559,7 @@ def listar_balancetes(request):
         return render(request, BALANCETE_LISTA_PAGE, {
             'msg':  'Erro no formulário preencha todos os campos.' + str(ex.args)})
         pass
-
+@login_required_usuario
 def cadastrar_base_calculo_pis_cofins(request):
     try:
         if request.method == "POST":
@@ -527,7 +591,7 @@ def cadastrar_base_calculo_pis_cofins(request):
                       {'msg': 'Erro no formulário preencha todos os campos.' + str(ex)})
     pass
 
-
+@login_required_usuario
 def cadastrar_base_calculo_irpj_csll(request):
     try:
         if request.method == "POST":
@@ -553,7 +617,7 @@ def cadastrar_base_calculo_irpj_csll(request):
                       {'msg': 'Erro no formulário preencha todos os campos.' + str(ex)})
     pass
 
-
+@login_required_usuario
 def exibir_contas_balancete(request, codigo):
     try:
         if codigo:
@@ -581,7 +645,7 @@ def exibir_contas_balancete(request, codigo):
 
     pass
 
-
+@login_required_usuario
 def cadastrar_relatorio(request):
     try:
         if request.method == 'POST':
@@ -766,7 +830,7 @@ def cadastrar_relatorio(request):
 
     pass
 
-
+@login_required_usuario
 def calcular_pis_cofins(request):
     try:
         if request.method == 'POST':
@@ -898,6 +962,7 @@ def calcular_pis_cofins(request):
         }
         return render(request, CADASTRO_PIS_COFINS_PAGE, context)
 
+@login_required_usuario
 def exportar_csv_pis_cofins(request, ano, mes):
     """
     Exporta um relatório CSV completo contendo:

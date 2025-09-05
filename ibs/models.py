@@ -28,6 +28,20 @@ class Login:
 
     pass
 
+class Perfil:
+    ADMIN = "ADMIN"
+    USUARIO = "USUARIO"
+
+    choices = (
+    (ADMIN, "Administrador"),
+    (USUARIO, "Usuario"),
+    )
+
+    @classmethod
+    def is_valid(cls, value: str) -> bool:
+        return value in {c[0] for c in cls.choices}
+
+
 class UsuarioModel(models.Model):
     class Meta:
         db_table = 'usuario'
@@ -37,11 +51,17 @@ class UsuarioModel(models.Model):
     email = models.CharField(max_length=100, null=False)
     senha = models.CharField(max_length=100, null=False)
 
+    perfil = models.CharField(max_length=10,
+                              choices=Perfil.choices,
+                              default=Perfil.USUARIO)
+
+    precisa_trocar_senha = models.BooleanField(default=False)  # novo campo
+
     def __str__(self):
-        return f'{self.codigo}, {self.nome}, {self.email}, {self.senha}'
+        return f'{self.codigo}, {self.nome}, {self.email}, {self.senha}, {self.perfil}'
 
     def __repr__(self):
-        return f'{self.codigo}, {self.nome}, {self.email}, {self.senha}'
+        return f'{self.codigo}, {self.nome}, {self.email}, {self.senha}, {self.perfil}'
 
     pass
 
