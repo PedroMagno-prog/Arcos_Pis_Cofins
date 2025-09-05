@@ -14,10 +14,13 @@ from functools import wraps
 
 
 def autenticar_usuario(request):
-    if request.session.get('usuario') is None:
-
+    print("autenticar_usuario")
+    if request.session.get('usuario') is not None:
         return True
-    pass
+    else:
+        print("usuario nao autenticado")
+        return False
+
 
 def criar_sessao(request, usuario):
     request.session['usuario'] = dict(nome=usuario.nome, id=usuario.codigo, perfil=usuario.perfil)
@@ -89,7 +92,10 @@ def login_required_admin(view_func):
     @wraps(view_func)
     def wrapper(request, *args, **kwargs):
         usuario = request.session.get('usuario')
-        if not usuario or usuario.get('perfil') != Perfil.ADMIN:
+        if not usuario:
+            return redirect('ibs:login')
+
+        if usuario.get('perfil') != Perfil.ADMIN:
             return render(request, HOME_PAGE)
         return view_func(request, *args, **kwargs)
     return wrapper
@@ -208,12 +214,9 @@ def login_page(request):
 
 @login_required_admin
 def cadastro_page(request):
-    if autenticar_usuario(request):
-        return render(request, HOME_PAGE)
-
     form = UsuarioCadastroForm()
     return render(request, CADASTRO_PAGE, {'form': form})
-    pass
+
 @login_required_usuario
 def cadastro_ibs_page(request):
 
@@ -256,12 +259,8 @@ def cadastro_relatorio(request):
 
 @login_required_admin
 def lista_page(request):
-    if autenticar_usuario(request):
-        return render(request, HOME_PAGE)
-
     usuarios = UsuarioModel.objects.all()
     return render(request, LISTA_PAGE, {'usuarios': usuarios})
-    pass
 
 @login_required_usuario
 def carregar_dados_pis_cofins(request):
@@ -963,107 +962,107 @@ def calcular_pis_cofins(request):
         }
         return render(request, CADASTRO_PIS_COFINS_PAGE, context)
 
-    @login_required_usuario
-    def exportar_csv_pis_cofins(request, ano, mes):
-        """
-        Exporta um relatório CSV completo contendo:
-            Contas e o movimento
-            Relatórios (SINPAGAC, etc.)
-            Apuração de PIS/COFINS
-        cada seção é separada por uma linha em branco.
-        """
-        response = HttpResponse(content_type='text/csv; charset=utf-8')
-        response['Content-Disposition'] = f'attachment; filename="apuracao_completa_{ano}_{mes}.csv"'
+@login_required_usuario
+def exportar_csv_pis_cofins(request, ano, mes):
+    """
+    Exporta um relatório CSV completo contendo:
+        Contas e o movimento
+        Relatórios (SINPAGAC, etc.)
+        Apuração de PIS/COFINS
+    cada seção é separada por uma linha em branco.
+    """
+    response = HttpResponse(content_type='text/csv; charset=utf-8')
+    response['Content-Disposition'] = f'attachment; filename="apuracao_completa_{ano}_{mes}.csv"'
 
-        writer = csv.writer(response, delimiter=';')
+    writer = csv.writer(response, delimiter=';')
 
-        # --- Bloco de Dados (Relatórios e Balancete) ---
-        try:
-            # Buscamos todos os dados de uma vez para sermos mais eficientes
-            dados_csv = montar_dados_tela_pis_cofins(ano, mes, None)
+    # --- Bloco de Dados (Relatórios e Balancete) ---
+    try:
+        # Buscamos todos os dados de uma vez para sermos mais eficientes
+        dados_csv = montar_dados_tela_pis_cofins(ano, mes, None)
 
-            # --- Parte 1: Detalhamento do Balancete ---
-            balancete = dados_csv.get('balancete')
+        # --- Parte 1: Detalhamento do Balancete ---
+        balancete = dados_csv.get('balancete')
 
-            if balancete and hasattr(balancete, 'contas'):
-                contas_do_balancete = balancete.contas
+        if balancete and hasattr(balancete, 'contas'):
+            contas_do_balancete = balancete.contas
 
-                if contas_do_balancete:
-                    fieldnames_contas = ['Conta do Razao', 'Descricao', 'Movimento']
-                    writer.writerow(fieldnames_contas)
+            if contas_do_balancete:
+                fieldnames_contas = ['Conta do Razao', 'Descricao', 'Movimento']
+                writer.writerow(fieldnames_contas)
 
-                    for conta in contas_do_balancete:
-                        writer.writerow([
-                            conta.conta_do_razao,
-                            conta.periodo,
-                            conta.movimento
-                        ])
-                else:
-                    writer.writerow(['Balancete encontrado, mas sem contas para exibir.'])
+                for conta in contas_do_balancete:
+                    writer.writerow([
+                        conta.conta_do_razao,
+                        conta.periodo,
+                        conta.movimento
+                    ])
             else:
-                writer.writerow(['Nenhum dado do balancete encontrado para este período.'])
-
-            writer.writerow([])
-
-            # --- Parte 2: Relatórios Consolidados ---
-            linhas_csv_dict = []
-            relatorios = {
-                'SINPAGAC': dados_csv.get('relatorio_sinpagac'),
-                'SINPAG': dados_csv.get('relatorio_sinpag'),
-                'SALV_VEND': dados_csv.get('relatorio_salvados_vendidos'),
-                'RECUPERADOS': dados_csv.get('relatorio_recuperados')
-            }
-
-            for tipo, obj in relatorios.items():
-                if not obj:
-                    continue
-
-                linha = {'Tipo': tipo, 'Ano': ano, 'Mês': mes}
-                dados_obj = obj.__dict__
-                dados_obj.pop('_state', None)
-                linha.update(dados_obj)
-                linhas_csv_dict.append(linha)
-
-            if not linhas_csv_dict:
-                writer.writerow(['Nenhum dado de relatório consolidado para exportar.'])
-            else:
-                header_set = set()
-                for linha in linhas_csv_dict:
-                    header_set.update(linha.keys())
-
-                colunas_fixas = ['Tipo', 'Ano', 'Mês']
-                colunas_dinamicas = sorted([h for h in header_set if h not in colunas_fixas])
-                fieldnames_relatorios = colunas_fixas + colunas_dinamicas
-
-                writer.writerow(fieldnames_relatorios)
-
-                for linha_dict in linhas_csv_dict:
-                    row_values = [linha_dict.get(fieldname, '') for fieldname in fieldnames_relatorios]
-                    writer.writerow(row_values)
-        except Exception as e:
-            writer.writerow([])  # Separador antes do erro
-            writer.writerow([f"Erro ao buscar dados consolidados ou do balancete: {e}"])
+                writer.writerow(['Balancete encontrado, mas sem contas para exibir.'])
+        else:
+            writer.writerow(['Nenhum dado do balancete encontrado para este período.'])
 
         writer.writerow([])
 
-        # --- Parte 3: Apuração PIS/COFINS da Sessão ---
-        dados_calculo = request.session.get('ultimo_calculo_pis_cofins', {})
+        # --- Parte 2: Relatórios Consolidados ---
+        linhas_csv_dict = []
+        relatorios = {
+            'SINPAGAC': dados_csv.get('relatorio_sinpagac'),
+            'SINPAG': dados_csv.get('relatorio_sinpag'),
+            'SALV_VEND': dados_csv.get('relatorio_salvados_vendidos'),
+            'RECUPERADOS': dados_csv.get('relatorio_recuperados')
+        }
 
-        if dados_calculo:
-            fieldnames_calculo = ['Imposto', 'Valor', 'Retido', 'Compensado', 'a Recolher', 'Darf']
-            writer.writerow(fieldnames_calculo)
+        for tipo, obj in relatorios.items():
+            if not obj:
+                continue
 
-            writer.writerow([
-                'PIS', dados_calculo.get('pis_valor_str', ''), dados_calculo.get('pis_retido_str', ''),
-                dados_calculo.get('pis_compensado_str', ''), dados_calculo.get('pis_recolher_str', ''),
-                dados_calculo.get('pis_darf_str', '')
-            ])
-            writer.writerow([
-                'COFINS', dados_calculo.get('cofins_valor_str', ''), dados_calculo.get('cofins_retido_str', ''),
-                dados_calculo.get('cofins_compensado_str', ''), dados_calculo.get('cofins_recolher_str', ''),
-                dados_calculo.get('cofins_darf_str', '')
-            ])
+            linha = {'Tipo': tipo, 'Ano': ano, 'Mês': mes}
+            dados_obj = obj.__dict__
+            dados_obj.pop('_state', None)
+            linha.update(dados_obj)
+            linhas_csv_dict.append(linha)
+
+        if not linhas_csv_dict:
+            writer.writerow(['Nenhum dado de relatório consolidado para exportar.'])
         else:
-            writer.writerow(['Nenhum cálculo recente encontrado na sessão para exportar.'])
+            header_set = set()
+            for linha in linhas_csv_dict:
+                header_set.update(linha.keys())
 
-        return response
+            colunas_fixas = ['Tipo', 'Ano', 'Mês']
+            colunas_dinamicas = sorted([h for h in header_set if h not in colunas_fixas])
+            fieldnames_relatorios = colunas_fixas + colunas_dinamicas
+
+            writer.writerow(fieldnames_relatorios)
+
+            for linha_dict in linhas_csv_dict:
+                row_values = [linha_dict.get(fieldname, '') for fieldname in fieldnames_relatorios]
+                writer.writerow(row_values)
+    except Exception as e:
+        writer.writerow([])  # Separador antes do erro
+        writer.writerow([f"Erro ao buscar dados consolidados ou do balancete: {e}"])
+
+    writer.writerow([])
+
+    # --- Parte 3: Apuração PIS/COFINS da Sessão ---
+    dados_calculo = request.session.get('ultimo_calculo_pis_cofins', {})
+
+    if dados_calculo:
+        fieldnames_calculo = ['Imposto', 'Valor', 'Retido', 'Compensado', 'a Recolher', 'Darf']
+        writer.writerow(fieldnames_calculo)
+
+        writer.writerow([
+            'PIS', dados_calculo.get('pis_valor_str', ''), dados_calculo.get('pis_retido_str', ''),
+            dados_calculo.get('pis_compensado_str', ''), dados_calculo.get('pis_recolher_str', ''),
+            dados_calculo.get('pis_darf_str', '')
+        ])
+        writer.writerow([
+            'COFINS', dados_calculo.get('cofins_valor_str', ''), dados_calculo.get('cofins_retido_str', ''),
+            dados_calculo.get('cofins_compensado_str', ''), dados_calculo.get('cofins_recolher_str', ''),
+            dados_calculo.get('cofins_darf_str', '')
+        ])
+    else:
+        writer.writerow(['Nenhum cálculo recente encontrado na sessão para exportar.'])
+
+    return response
