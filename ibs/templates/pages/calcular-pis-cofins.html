@@ -266,11 +266,8 @@
     {% if dados.base %}
         <h3 align="center"> Apuração Mensal </h3>
         <div class="d-flex justify-content-center my-3">
-        <a href="{% url 'ibs:exportar_calculo_da_sessao' %}" class="btn btn-success mr-2">
+        <a href="{% url 'ibs:exportar_csv_pis_cofins' ano=ano mes=mes%}" class="btn btn-success mr-2">
            Exportar Apuração (CSV)
-        </a>
-        <a href="{% url 'ibs:export_relatorios_consolidados_csv' ano=ano mes=mes %}" class="btn btn-info">
-            Exportar Relatórios (CSV)
         </a>
     </div>
 

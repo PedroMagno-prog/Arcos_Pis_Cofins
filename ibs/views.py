@@ -828,10 +828,10 @@ def calcular_pis_cofins(request):
                 print(dif_soma_receita_sinpag_sinpagac)
                 print(base_calculo)
 
-                base.pis_retido = float(retencao_pis)
-                base.compensacao_pis = float(compensacao_pis)
-                base.cofins_retido = float(retencao_cofins)
-                base.compensacao_cofins = float(compensacao_cofins)
+                base.pis_retido = float(retencao_pis.replace(",", "."))
+                base.compensacao_pis = float(compensacao_pis.replace(",", "."))
+                base.cofins_retido = float(retencao_cofins.replace(",", "."))
+                base.compensacao_cofins = float(compensacao_cofins.replace(",", "."))
 
                 base.pis = base_calculo * 0.0065
                 base.pis_recolher = base.pis - (base.pis_retido + base.compensacao_pis)
@@ -898,99 +898,106 @@ def calcular_pis_cofins(request):
         }
         return render(request, CADASTRO_PIS_COFINS_PAGE, context)
 
-    pass
+def exportar_csv_pis_cofins(request, ano, mes):
+    """
+    Exporta um relatório CSV completo contendo:
+        Contas e o movimento
+        Relatórios (SINPAGAC, etc.)
+        Apuração de PIS/COFINS
+    cada seção é separada por uma linha em branco.
+    """
+    response = HttpResponse(content_type='text/csv; charset=utf-8')
+    response['Content-Disposition'] = f'attachment; filename="apuracao_completa_{ano}_{mes}.csv"'
 
-# Novas Funções de Export CSV 13/08
-def exportar_calculo_da_sessao_csv(request):
-    """
-    Exporta para CSV o último cálculo de PIS/COFINS armazenado na sessão.
-    """
-    # Pega os dados da sessão. Se não existir, retorna um dicionário vazio.
+    writer = csv.writer(response, delimiter=';')
+
+    # --- Bloco de Dados (Relatórios e Balancete) ---
+    try:
+        # Buscamos todos os dados de uma vez para sermos mais eficientes
+        dados_csv = montar_dados_tela_pis_cofins(ano, mes, None)
+
+        # --- Parte 1: Detalhamento do Balancete ---
+        balancete = dados_csv.get('balancete')
+
+        if balancete and hasattr(balancete, 'contas'):
+            contas_do_balancete = balancete.contas
+
+            if contas_do_balancete:
+                fieldnames_contas = ['Conta do Razao', 'Descricao', 'Movimento']
+                writer.writerow(fieldnames_contas)
+
+                for conta in contas_do_balancete:
+                    writer.writerow([
+                        conta.conta_do_razao,
+                        conta.periodo,
+                        conta.movimento
+                    ])
+            else:
+                writer.writerow(['Balancete encontrado, mas sem contas para exibir.'])
+        else:
+            writer.writerow(['Nenhum dado do balancete encontrado para este período.'])
+
+        writer.writerow([])
+
+        # --- Parte 2: Relatórios Consolidados ---
+        linhas_csv_dict = []
+        relatorios = {
+            'SINPAGAC': dados_csv.get('relatorio_sinpagac'),
+            'SINPAG': dados_csv.get('relatorio_sinpag'),
+            'SALV_VEND': dados_csv.get('relatorio_salvados_vendidos'),
+            'RECUPERADOS': dados_csv.get('relatorio_recuperados')
+        }
+
+        for tipo, obj in relatorios.items():
+            if not obj:
+                continue
+
+            linha = {'Tipo': tipo, 'Ano': ano, 'Mês': mes}
+            dados_obj = obj.__dict__
+            dados_obj.pop('_state', None)
+            linha.update(dados_obj)
+            linhas_csv_dict.append(linha)
+
+        if not linhas_csv_dict:
+            writer.writerow(['Nenhum dado de relatório consolidado para exportar.'])
+        else:
+            header_set = set()
+            for linha in linhas_csv_dict:
+                header_set.update(linha.keys())
+
+            colunas_fixas = ['Tipo', 'Ano', 'Mês']
+            colunas_dinamicas = sorted([h for h in header_set if h not in colunas_fixas])
+            fieldnames_relatorios = colunas_fixas + colunas_dinamicas
+
+            writer.writerow(fieldnames_relatorios)
+
+            for linha_dict in linhas_csv_dict:
+                row_values = [linha_dict.get(fieldname, '') for fieldname in fieldnames_relatorios]
+                writer.writerow(row_values)
+    except Exception as e:
+        writer.writerow([])  # Separador antes do erro
+        writer.writerow([f"Erro ao buscar dados consolidados ou do balancete: {e}"])
+
+    writer.writerow([])
+
+    # --- Parte 3: Apuração PIS/COFINS da Sessão ---
     dados_calculo = request.session.get('ultimo_calculo_pis_cofins', {})
 
-    if not dados_calculo:
-        return HttpResponse("Nenhum cálculo recente encontrado para exportar.", status=404)
+    if dados_calculo:
+        fieldnames_calculo = ['Imposto', 'Valor', 'Retido', 'Compensado', 'a Recolher', 'Darf']
+        writer.writerow(fieldnames_calculo)
 
-    response = HttpResponse(content_type='text/csv; charset=utf-8')
-    response['Content-Disposition'] = 'attachment; filename="apuracao_pis_cofins.csv"'
-
-    fieldnames = ['Nome', 'Valor', 'Retido', 'Compensado', 'a Recolher', 'Darf']
-    writer = csv.DictWriter(response, fieldnames=fieldnames, delimiter=';')
-
-    writer.writeheader()
-    writer.writerow({
-        'Nome': 'PIS', 'Valor': dados_calculo.get('pis_valor_str'), 'Retido': dados_calculo.get('pis_retido_str'),
-        'Compensado': dados_calculo.get('pis_compensado_str'), 'a Recolher': dados_calculo.get('pis_recolher_str'),
-        'Darf': dados_calculo.get('pis_darf_str')
-    })
-    writer.writerow({
-        'Nome': 'COFINS', 'Valor': dados_calculo.get('cofins_valor_str'), 'Retido': dados_calculo.get('cofins_retido_str'),
-        'Compensado': dados_calculo.get('cofins_compensado_str'), 'a Recolher': dados_calculo.get('cofins_recolher_str'),
-        'Darf': dados_calculo.get('cofins_darf_str')
-    })
-
-    return response
-
-
-def export_relatorios_consolidados_csv(request, ano, mes):
-    """
-    Gera um CSV consolidado com todos os relatórios usados no cálculo.
-    """
-    try:
-        # Passo 1: Chamar sua função existente para obter todos os dados.
-        # Passamos 'None' para o 'base' pois não precisamos dos cálculos finais aqui.
-        dados_relatorios_obj = montar_dados_tela_pis_cofins(ano, mes, None)
-    except Exception as e:
-        # Se montar_dados_tela falhar (ex: Balancete não encontrado), retorne um erro amigável.
-        raise Http404(f"Não foi possível gerar os dados para os relatórios: {e}")
-
-    # Passo 2: Transformar o dicionário de objetos em uma lista de dicionários (formato de linha).
-    linhas_csv = []
-
-    # Extrai os objetos do dicionário principal
-    # Usamos .get() para evitar erros se uma chave não existir
-    relatorios = {
-        'SINPAGAC': dados_relatorios_obj.get('relatorio_sinpagac'),
-        'SINPAG': dados_relatorios_obj.get('relatorio_sinpag'),
-        'SALV_VEND': dados_relatorios_obj.get('relatorio_salvados_vendidos'),
-        'RECUPERADOS': dados_relatorios_obj.get('relatorio_recuperados'),
-        'BALANCETE': dados_relatorios_obj.get('balancete')  # Trataremos este de forma especial
-    }
-
-    for tipo, obj in relatorios.items():
-        if not obj:
-            continue
-
-        linha = {'Tipo': tipo, 'Ano': ano, 'Mês': mes}
-
-        # Convertendo o objeto Django em um dicionário para o CSV
-        # '__dict__' contém os campos do modelo.
-        # Nós removemos '_state' que é um atributo interno do Django.
-        dados_obj = obj.__dict__
-        dados_obj.pop('_state', None)
-
-        linha.update(dados_obj)
-        linhas_csv.append(linha)
-
-    if not linhas_csv:
-        return HttpResponse("Nenhum dado de relatório para exportar.", status=204)
-
-    # Passo 3: Estratégia de cabeçalho dinâmico (exatamente como planejado)
-    header_set = set()
-    for linha in linhas_csv:
-        header_set.update(linha.keys())
-
-    # Organizando as colunas para melhor leitura
-    colunas_fixas = ['Tipo', 'Ano', 'Mês']
-    colunas_dinamicas = sorted([h for h in header_set if h not in colunas_fixas])
-    fieldnames = colunas_fixas + colunas_dinamicas
-
-    # Passo 4: Preparar a resposta e escrever o CSV
-    response = HttpResponse(content_type='text/csv', charset='utf-8')  # Adicionado charset utf-8
-    response['Content-Disposition'] = f'attachment; filename="relatorios_consolidados_{ano}_{mes}.csv"'
-
-    writer = csv.DictWriter(response, fieldnames=fieldnames, delimiter=';')
-    writer.writeheader()
-    writer.writerows(linhas_csv)
+        writer.writerow([
+            'PIS', dados_calculo.get('pis_valor_str', ''), dados_calculo.get('pis_retido_str', ''),
+            dados_calculo.get('pis_compensado_str', ''), dados_calculo.get('pis_recolher_str', ''),
+            dados_calculo.get('pis_darf_str', '')
+        ])
+        writer.writerow([
+            'COFINS', dados_calculo.get('cofins_valor_str', ''), dados_calculo.get('cofins_retido_str', ''),
+            dados_calculo.get('cofins_compensado_str', ''), dados_calculo.get('cofins_recolher_str', ''),
+            dados_calculo.get('cofins_darf_str', '')
+        ])
+    else:
+        writer.writerow(['Nenhum cálculo recente encontrado na sessão para exportar.'])
 
     return response
