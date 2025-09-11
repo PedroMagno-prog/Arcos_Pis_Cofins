@@ -18,6 +18,46 @@ def locale_br(valor):
     locale.currency(543921.94, symbol=True, grouping=True)
     return locale.currency(valor, symbol=True, grouping=True)
 
+def limpar_string_moeda(valor):
+    """
+    Recebe um número ou uma string (ex: "R$ -12345,67") e formata
+    para o padrão contábil brasileiro (ex: "-1.234.567,89"),
+    ideal para exportação em CSV.
+    """
+    numero_float = 0
+    sinal = ''
+
+    # Isola o sinal para tratá-lo no final
+    if '-' in valor:
+        sinal = '-'
+
+    # Limpa a string de qualquer caractere não numérico, exceto a vírgula decimal
+    valor_numerico_str = ''.join(c for c in valor if c.isdigit() or c == ',')
+    # Converte para o formato de float padrão do Python (com ponto decimal)
+    valor_numerico_str = valor_numerico_str.replace(',', '.')
+
+    try:
+        numero_float = float(valor_numerico_str)
+    except (ValueError, TypeError):
+        return valor  # Se a conversão falhar, retorna o valor original
+
+    # --- Passo 2: Formatar o número para o padrão brasileiro ---
+    # Separa a parte inteira da decimal, já arredondando para 2 casas
+    parte_inteira_str, parte_decimal_str = f"{abs(numero_float):.2f}".split('.')
+
+    # Adiciona os separadores de milhar (.) na parte inteira
+    parte_inteira_com_pontos = ""
+    for i, digito in enumerate(reversed(parte_inteira_str)):
+        if i > 0 and i % 3 == 0:
+            # Insere um ponto a cada 3 dígitos
+            parte_inteira_com_pontos = "." + parte_inteira_com_pontos
+        parte_inteira_com_pontos = digito + parte_inteira_com_pontos
+
+    # --- Passo 3: Juntar tudo ---
+    # Reconstrói o número com o sinal (se houver), a parte inteira formatada
+    # e a parte decimal separada por vírgula.
+    return f"{sinal}{parte_inteira_com_pontos},{parte_decimal_str}"
+
 def calcular_aliquota_ibs(codigo_servico=float):
     if codigo_servico == 1001:
         return 26.5
