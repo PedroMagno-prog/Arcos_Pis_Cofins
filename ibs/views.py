@@ -972,7 +972,7 @@ def exportar_csv_pis_cofins(request, ano, mes):
     cada seção é separada por uma linha em branco.
     """
     response = HttpResponse(content_type='text/csv; charset=utf-8')
-    response['Content-Disposition'] = f'attachment; filename="apuracao_completa_{ano}_{mes}.csv"'
+    response['Content-Disposition'] = f'attachment; filename="Apuracao_Pis_Cofins_{convert_mes_texto(mes)}{ano}.csv"'
 
     writer = csv.writer(response, delimiter=';')
 
@@ -992,11 +992,13 @@ def exportar_csv_pis_cofins(request, ano, mes):
                 writer.writerow(fieldnames_contas)
 
                 for conta in contas_do_balancete:
+                    movimento_limpo = limpar_string_moeda(conta.movimento)
                     writer.writerow([
                         conta.conta_do_razao,
                         conta.periodo,
-                        conta.movimento
+                        movimento_limpo
                     ])
+                writer.writerow(['', 'Base de Calculo:', limpar_string_moeda(dados_csv.get('base_calculo'))])
             else:
                 writer.writerow(['Balancete encontrado, mas sem contas para exibir.'])
         else:
@@ -1005,43 +1007,27 @@ def exportar_csv_pis_cofins(request, ano, mes):
         writer.writerow([])
 
         # --- Parte 2: Relatórios Consolidados ---
-        linhas_csv_dict = []
-        relatorios = {
-            'SINPAGAC': dados_csv.get('relatorio_sinpagac'),
-            'SINPAG': dados_csv.get('relatorio_sinpag'),
-            'SALV_VEND': dados_csv.get('relatorio_salvados_vendidos'),
-            'RECUPERADOS': dados_csv.get('relatorio_recuperados')
-        }
-
-        for tipo, obj in relatorios.items():
-            if not obj:
-                continue
-
-            linha = {'Tipo': tipo, 'Ano': ano, 'Mês': mes}
-            dados_obj = obj.__dict__
-            dados_obj.pop('_state', None)
-            linha.update(dados_obj)
-            linhas_csv_dict.append(linha)
-
-        if not linhas_csv_dict:
-            writer.writerow(['Nenhum dado de relatório consolidado para exportar.'])
-        else:
-            header_set = set()
-            for linha in linhas_csv_dict:
-                header_set.update(linha.keys())
-
-            colunas_fixas = ['Tipo', 'Ano', 'Mês']
-            colunas_dinamicas = sorted([h for h in header_set if h not in colunas_fixas])
-            fieldnames_relatorios = colunas_fixas + colunas_dinamicas
-
-            writer.writerow(fieldnames_relatorios)
-
-            for linha_dict in linhas_csv_dict:
-                row_values = [linha_dict.get(fieldname, '') for fieldname in fieldnames_relatorios]
-                writer.writerow(row_values)
+        fieldnames_relatorios = ['Tipo', 'Mes/Ano', 'Valor']
+        writer.writerow(fieldnames_relatorios)
+        # Relatório SINPAG
+        relatorio_sinpag = dados_csv.get('relatorio_sinpag')
+        writer.writerow(['SINPAG', str(mes) + '/' + str(ano),
+                         relatorio_sinpag.dif_soma_cos_ced_vr_mov]) if relatorio_sinpag else 'SINPAG nao encontrado'
+        # Relatório SINPAGAC
+        relatorio_sinpagac = dados_csv.get('relatorio_sinpagac')
+        writer.writerow(['SINPAGAC', str(mes) + '/' + str(ano),
+                         relatorio_sinpagac.soma_vr_mov]) if relatorio_sinpagac else 'SINPAGAC nao encontrado'
+        # Relatório SALVADOS VENDIDOS
+        relatorio_salvados = dados_csv.get('relatorio_salvados_vendidos')
+        writer.writerow(['SALVADOS', str(mes) + '/' + str(ano),
+                         relatorio_salvados.soma_vr_mov]) if relatorio_salvados else 'SALVADOS nao encontrado'
+        # Relatório RECUPERADOS
+        relatorio_recuperados = dados_csv.get('relatorio_recuperados')
+        writer.writerow(['RECUPERADOS', str(mes) + '/' + str(ano), # ERRO: str(mes + '/' + ano)
+                         relatorio_recuperados.dif_soma_baixa_ind_res_salv]) if relatorio_recuperados else 'RECUPERADOS nao encontrado'
     except Exception as e:
         writer.writerow([])  # Separador antes do erro
-        writer.writerow([f"Erro ao buscar dados consolidados ou do balancete: {e}"])
+        writer.writerow([f"Erro ao buscar relatórios ou balancete: {e}"])
 
     writer.writerow([])
 
@@ -1049,18 +1035,16 @@ def exportar_csv_pis_cofins(request, ano, mes):
     dados_calculo = request.session.get('ultimo_calculo_pis_cofins', {})
 
     if dados_calculo:
-        fieldnames_calculo = ['Imposto', 'Valor', 'Retido', 'Compensado', 'a Recolher', 'Darf']
+        fieldnames_calculo = ['Imposto', 'Valor Apurado', 'Retido', 'Compensado', 'a Recolher']
         writer.writerow(fieldnames_calculo)
 
         writer.writerow([
             'PIS', dados_calculo.get('pis_valor_str', ''), dados_calculo.get('pis_retido_str', ''),
-            dados_calculo.get('pis_compensado_str', ''), dados_calculo.get('pis_recolher_str', ''),
-            dados_calculo.get('pis_darf_str', '')
+            dados_calculo.get('pis_compensado_str', ''), dados_calculo.get('pis_recolher_str', '')
         ])
         writer.writerow([
             'COFINS', dados_calculo.get('cofins_valor_str', ''), dados_calculo.get('cofins_retido_str', ''),
-            dados_calculo.get('cofins_compensado_str', ''), dados_calculo.get('cofins_recolher_str', ''),
-            dados_calculo.get('cofins_darf_str', '')
+            dados_calculo.get('cofins_compensado_str', ''), dados_calculo.get('cofins_recolher_str', '')
         ])
     else:
         writer.writerow(['Nenhum cálculo recente encontrado na sessão para exportar.'])
