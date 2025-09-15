@@ -141,19 +141,23 @@ def montar_dados_tela_pis_cofins(ano, mes, base):
         base_calculo = locale_br(base_calculo)
 
         print('Base de calculo :', base_calculo)
+        if relatorio_sinpag:
+            relatorio_sinpag.soma_vr_cos_ced = locale_br(relatorio_sinpag.soma_vr_cos_ced)
+            relatorio_sinpag.soma_vr_mov = locale_br(relatorio_sinpag.soma_vr_mov)
+            relatorio_sinpag.dif_soma_cos_ced_vr_mov = locale_br(relatorio_sinpag.dif_soma_cos_ced_vr_mov)
 
-        relatorio_sinpag.soma_vr_cos_ced = locale_br(relatorio_sinpag.soma_vr_cos_ced)
-        relatorio_sinpag.soma_vr_mov = locale_br(relatorio_sinpag.soma_vr_mov)
-        relatorio_sinpag.dif_soma_cos_ced_vr_mov = locale_br(relatorio_sinpag.dif_soma_cos_ced_vr_mov)
+        if relatorio_sinpagac:
+            relatorio_sinpagac.soma_vr_mov = locale_br(relatorio_sinpagac.soma_vr_mov)
 
-        relatorio_sinpagac.soma_vr_mov = locale_br(relatorio_sinpagac.soma_vr_mov)
+        if relatorio_recuperados:
+            relatorio_recuperados.dif_soma_baixa_ind_res_salv = locale_br(
+                relatorio_recuperados.dif_soma_baixa_ind_res_salv)
+            relatorio_recuperados.soma_baixa_ind = locale_br(relatorio_recuperados.soma_baixa_ind)
+            relatorio_recuperados.soma_baixa_res = locale_br(relatorio_recuperados.soma_baixa_res)
+            relatorio_recuperados.soma_baixa_salv = locale_br(relatorio_recuperados.soma_baixa_salv)
 
-        relatorio_recuperados.dif_soma_baixa_ind_res_salv = locale_br(relatorio_recuperados.dif_soma_baixa_ind_res_salv)
-        relatorio_recuperados.soma_baixa_ind = locale_br(relatorio_recuperados.soma_baixa_ind)
-        relatorio_recuperados.soma_baixa_res = locale_br(relatorio_recuperados.soma_baixa_res)
-        relatorio_recuperados.soma_baixa_salv = locale_br(relatorio_recuperados.soma_baixa_salv)
-
-        relatorio_salvados_vendidos.soma_vr_mov = locale_br(relatorio_salvados_vendidos.soma_vr_mov)
+        if relatorio_salvados_vendidos:
+            relatorio_salvados_vendidos.soma_vr_mov = locale_br(relatorio_salvados_vendidos.soma_vr_mov)
 
         if base:
             dados = dict(relatorio_sinpagac=relatorio_sinpagac, relatorio_sinpag=relatorio_sinpag,
@@ -882,6 +886,28 @@ def calcular_pis_cofins(request):
                 relatorio_sinpagac = RelatorioSINPAGAC.objects.filter(ano=ano, mes=mes).first()
                 relatorio_salvados_vendidos = RelatorioSalvadosVendidosNovos.objects.filter(ano=ano, mes=mes).first()
                 relatorio_recuperados = RelatorioRecuperadosNovo.objects.filter(ano=ano, mes=mes).first()
+
+                # Calculo final com a possibilidade de um relatorio não estar presente.
+                if not relatorio_sinpag:
+                    relatorio_sinpag = RelatorioSINPAG()
+                    relatorio_sinpag.dif_soma_cos_ced_vr_mov = 0
+                    relatorio_sinpag.soma_vr_mov = 0
+                    relatorio_sinpag.soma_vr_cos_ced = 0
+
+                if not relatorio_sinpagac:
+                    relatorio_sinpagac = RelatorioSINPAGAC()
+                    relatorio_sinpagac.soma_vr_mov = 0
+
+                if not relatorio_recuperados:
+                    relatorio_recuperados = RelatorioRecuperadosNovo()
+                    relatorio_recuperados.soma_baixa_ind = 0
+                    relatorio_recuperados.soma_baixa_salv = 0
+                    relatorio_recuperados.soma_baixa_res = 0
+                    relatorio_recuperados.dif_soma_baixa_ind_res_salv = 0
+
+                if not relatorio_salvados_vendidos:
+                    relatorio_salvados_vendidos = RelatorioSalvadosVendidosNovos()
+                    relatorio_salvados_vendidos.soma_vr_mov = 0
 
                 dif_soma_receita_sinpag_sinpagac = base.soma_receita_balancete + (
                     relatorio_sinpag.dif_soma_cos_ced_vr_mov + relatorio_sinpagac.soma_vr_mov)
