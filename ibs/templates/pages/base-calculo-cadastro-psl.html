@@ -1,0 +1,108 @@
+{% extends 'pages/base.html' %}
+{% block  main_content %}
+
+
+<div class="jumbotron">
+    <div class="container">
+        <h3> Vincular conta PSL </h3>
+    </div>
+</div>
+
+
+<main role="main" class="container" >
+
+  <div class="jumbotron">
+      <p class="lead"> Formulário de cadastro.  </p>
+
+      <form  method="post" action="{% url 'ibs:cadastrar-conta-base-psl' %}">
+        {%  csrf_token %}
+          <label  for="conta"> Número da conta </label>
+                <input type="text" name="conta" id="conta" class="form-control" />
+
+          <label for="descricao" > Descrição </label>
+              <input type="text" name="descricao" id="descricao" class="form-control" />
+
+          <br />
+          <label> Tipo Conta </label>
+          <br />
+          <label>
+              <input type="radio" name="tipo" value="1" >&nbsp; Credora &nbsp;
+              <input type="radio" name="tipo" value="2"> &nbsp; Devedora
+              <input type="radio" name="tipo" value="3" checked> &nbsp; (Credora/Devedora)
+          </label>
+          <br />
+          <br />
+          <input type="submit" value="Enviar" class="btn btn-lg btn-primary">
+    </form>
+      <br />
+
+            <div class="float-right"><a href="{% url 'ibs:carregar-contas-base-calculo'  codigo=3%}"
+                                  role="button" class="btn  btn-lg btn-success"> Exibir contas </a>
+            </div><br />
+
+  </div>
+
+       {% if msg %}
+      <div class="alert alert-warning alert-dismissible fade show" role="alert">
+           <strong> {{msg  }} </strong>
+              <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+       </div>
+      {% endif %}
+
+         {% if  contas or contas|length > 0 %}
+    <div class="jumbotron">
+     <table width="100%" class=" table table-light table-striped table-bordered">
+        <thead align="center">
+                <tr>
+                    <th> Código </th>
+                    <th> Conta </th>
+                    <th> Descrição </th>
+                    <th> Vigência </th>
+                    <th> Tipo Conta </th>
+                </tr>
+        </thead>
+                   <tbody align="center">
+                     {%for conta in contas %}
+                     <tr >
+                         <td> {{conta.codigo }}</td>
+                         <td> {{conta.conta }}</td>
+                         <td> {{conta.descricao }}</td>
+                         <td> {% if conta.vigencia == True %}
+                                Ativa
+                             {% else %}
+                             Inativa
+                             {% endif %}
+                         </td>
+                         <td>
+                             {% if conta.tipo_conta ==  1 %}
+                             Credora
+                             {% elif conta.tipo_conta == 2 %}
+                             Devedora
+                             {% else %}
+                              Credora/Devedora
+                             {% endif %}
+                             </td>
+
+                     </tr>
+
+                     {% endfor %}
+
+                   </tbody>
+
+       </table>
+
+
+
+  </div>
+    {% endif %}
+
+
+
+</main>
+
+
+
+
+{% endblock %}

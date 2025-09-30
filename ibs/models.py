@@ -1,5 +1,5 @@
 from django.db import models
-
+import datetime
 
 # Create your models here.
 class Login:
@@ -263,6 +263,40 @@ class ContaBaseCalculoPisCofins(models.Model):
     pass
 
 
+class ContaBaseCalculoPSL(models.Model):
+
+    class Meta:
+        db_table = 'contabasecalculopsl'
+
+    codigo = models.AutoField(primary_key=True)
+    conta = models.CharField(null=False, max_length=255)
+    descricao = models.CharField(null=False, max_length=255)
+    data_cadastro = models.DateField(auto_now_add=True)
+
+    vigencia = models.BooleanField(default=True)
+
+    class TipoConta(models.IntegerChoices):
+        # - CREDORA - negativo
+        CREDORA = 1
+        # + DEVEDORA - positivo
+        DEVEDORA = 2
+        # + CONTA MISTA, não considerar no calculo
+        CREDORA_DEVEDORA = 3
+
+    tipo_conta = models.IntegerField(
+        choices=TipoConta.choices,
+        default=TipoConta.CREDORA_DEVEDORA
+    )
+
+    def __str__(self):
+        return f'{self.codigo}, {self.conta}, {self.descricao}, {self.data_cadastro}, ' \
+               f'{self.tipo_conta}, {self.vigencia}'
+
+    def __repr__(self):
+        return f'{self.codigo}, {self.conta}, {self.descricao}, {self.data_cadastro}, ' \
+               f'{self.tipo_conta}, {self.vigencia}'
+    pass
+
 class Balancete(models.Model):
 
     class Meta:
@@ -309,6 +343,92 @@ class ContaBalancete(models.Model):
     def __repr__(self):
         return f'{self.conta_do_razao}, {self.periodo}, {self.saldo_anterior}, {self.debitos}, {self.creditos},' \
                f'{self.movimento}, {self.saldo_acumulado}, {self.grupo_ramo}, {self.nome_conta}'
+    pass
+
+
+class ApuracaoPSL(models.Model):
+    class Meta:
+        db_table = 'apuracaopsl'
+
+    codigo = models.AutoField(primary_key=True)
+
+    ano = models.IntegerField(null=False, default=0)
+    mes = models.IntegerField(null=False, default=0)
+
+    # Somatorio do saldo do ramo de cada conta do balancete por ramo definido.
+    total_base_calculo = models.FloatField(null=False, default=0)
+    # Calculado
+    total_pis_psl = models.FloatField(null=False, default=0)
+    # Calculado
+    total_cofins_psl = models.FloatField(null=False, default=0)
+
+    # Calculado -> Soma = Pis + Cofins
+    total_soma_pis_cofins = models.FloatField(null=False, default=0)
+
+    data_cadastro = models.DateField(default=datetime.date.today)
+
+    def __str__(self):
+        return f'{self.codigo}, {self.ano}, {self.mes},{self.data_cadastro},' \
+               f'{self.total_base_calculo}, {self.total_pis_psl}, {self.total_cofins_psl},' \
+               f'{self.total_soma_pis_cofins}'
+
+    def __repr__(self):
+        return f'{self.codigo}, {self.ano}, {self.mes},{self.data_cadastro},' \
+               f'{self.total_base_calculo}, {self.total_pis_psl}, {self.total_cofins_psl},' \
+               f'{self.total_soma_pis_cofins}'
+
+    pass
+
+
+
+class RamoAgrupadoPSL(models.Model):
+    class Meta:
+        db_table = 'ramoagrupadopsl'
+
+    codigo = models.AutoField(primary_key=True)
+    ramo = models.CharField(max_length=100, null=False)
+
+    # Somatorio do saldo do ramo de cada conta do balancete por ramo definido.
+    base_calculo = models.FloatField(null=False)
+    # Calculado
+    pis_psl = models.FloatField(null=False)
+    # Calculado
+    cofins_psl = models.FloatField(null=False)
+
+    # Calculado -> Soma = Pis + Cofins
+    total_soma_pis_cofins = models.FloatField(null=False)
+
+    apuracao_psl = models.ForeignKey(ApuracaoPSL, on_delete=models.CASCADE,
+                                  null=False)
+
+    def __str__(self):
+        return f'{self.codigo}, {self.ramo }, {self.base_calculo}, {self.pis_psl}, {self.cofins_psl},' \
+               f'{self.total_soma_pis_cofins}'
+
+    def __repr__(self):
+        return f'{self.codigo}, {self.ramo}, {self.base_calculo}, {self.pis_psl}, {self.cofins_psl}, ' \
+               f'{self.total_soma_pis_cofins}'
+
+    pass
+
+
+class ContaApuracaoPSL(models.Model):
+    class Meta:
+        db_table = 'contaapuracaopsl'
+
+    codigo = models.AutoField(primary_key=True)
+    conta = models.CharField(null=False, max_length=255)
+    descricao = models.CharField(null=False, max_length=255, default='')
+
+    apuracao_psl = models.ForeignKey(ApuracaoPSL, on_delete=models.CASCADE,
+                                  null=False)
+
+    def __str__(self):
+        return f'{self.codigo}, {self.conta}, {self.descricao}'
+
+    def __repr__(self):
+        return f'{self.codigo}, {self.conta}, {self.descricao}'
+
     pass
 
 

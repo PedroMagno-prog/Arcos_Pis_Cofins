@@ -10,9 +10,22 @@ urlpatterns = [
     path('Cadastro/', cadastro_page, name='cadastro'),
     path('resetar-senha/', resetar_senha, name='resetar-senha'),
 
+    path('Cadastro-Conta-Calculo-Base-psl/', cadastro_base_calculo_psl,
+         name='cadastro-conta-base-psl'),
+
+
     path('Cadastro-pis-cofins/', cadastro_pis_cofins, name='cadastro-pis-cofins'),
+    path('Cadastro-psl/', cadastro_psl, name='cadastro-psl'),
+
+
     path('Carregar-dados-pis-cofins/', carregar_dados_pis_cofins, name='carregar-dados-pis-cofins'),
     path('Calcular-pis-cofins/', calcular_pis_cofins, name='calcular-pis-cofins'),
+
+    path('Calcular-psl/', calcular_psl, name='calcular-psl'),
+
+    path('Carregar-Dados-psl/', carregar_dados_psl, name='carregar-dados-psl'),
+
+
 
     path('Cadastrar/', cadastrar, name='cadastrar'),
     path('Lista/', lista_page, name='lista'),
@@ -46,6 +59,9 @@ urlpatterns = [
 
     path('Cadastrar-Conta-Calculo-Base-irpj-csll/', cadastrar_base_calculo_irpj_csll,
          name='cadastrar-conta-base-irpj-csll'),
+
+    path('Cadastrar-Conta-Calculo-Base-psl/', cadastrar_base_calculo_psl,
+         name='cadastrar-conta-base-psl'),
 
     path('exportar-csv/<int:ano>/<int:mes>/', exportar_csv_pis_cofins, name='exportar_csv_pis_cofins'),
 ]
