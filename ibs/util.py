@@ -501,3 +501,97 @@ def soma_contas_balancete(tipo_conta, contas_balancetes):
     soma = verificar_tipo_conta(tipo_conta, soma)
     return soma
     pass
+
+def agrupamento_somatorio_por_ramo(contas, lista_ramos):
+    ramos = []
+    for ramo in lista_ramos:
+        ramoAgrupado = RamoAgrupadoPSL()
+        soma = 0
+        nome_ramo = ''
+        for conta in contas:
+            if ramo == conta.grupo_ramo:
+                print(ramo)
+                soma = soma + conta.saldo_acumulado
+                print(soma)
+                nome_ramo = conta.grupo_ramo
+                pass
+        ramoAgrupado.base_calculo = soma
+        ramoAgrupado.ramo = nome_ramo
+        ramos.append(ramoAgrupado)
+    return ramos
+    pass
+
+def aplicar_alicota_pis_cofins_psl(ramos):
+    for ramo in ramos:
+        ramo.pis_psl = ramo.base_calculo * 0.0065
+        ramo.cofins_psl = ramo.base_calculo * 0.04
+        ramo.total_soma_pis_cofins = ramo.pis_psl + ramo.cofins_psl
+        pass
+    return ramos
+    pass
+
+def somatorio_saldo_ramos(ramos):
+    somatorio = 0
+    for r in ramos:
+        somatorio = somatorio + r.base_calculo
+
+    return somatorio
+    pass
+
+def calcular_percentual_relativo_por_ramo(ramos, somatorio):
+    percentuais = []
+    for r in ramos:
+        calculo = r.base_calculo / somatorio
+        tupla = (r.ramo, abs(calculo))
+        percentuais.append(tupla)
+    return percentuais
+    pass
+
+def calcular_remocao_dos_ramos_indefinidos(ramos):
+    ramos_indefinido = []
+    for i, ramo in enumerate(ramos):
+        if ramo.ramo == '#' or ramo.ramo == '99.99':
+            elemento = ramos.pop(i)
+            ramos_indefinido.append(elemento)
+        pass
+
+    return ramos_indefinido
+    pass
+
+
+def calcular_valor_diluicao_por_ramo_indefinido(ramo_indefinido, percentuais):
+    valor_diluido_por_ramo = []
+    for percentual in percentuais:
+        calculo = percentual[1] * ramo_indefinido.base_calculo
+        tupla = (percentual[0], percentual[1], calculo)
+        valor_diluido_por_ramo.append(tupla)
+        pass
+    return valor_diluido_por_ramo
+    pass
+
+# Calculo do valor da base do ramo com diluição dos ramos indefinidos
+def calcular_valor_base_ramo(ramos, valor_diluido):
+    for ramo in ramos:
+        for valor in valor_diluido:
+            if ramo.ramo == valor[0]:
+                ramo.base_calculo = ramo.base_calculo + valor[2]
+    pass
+
+def calcular_totais_apuracao_psl(apuracaoPSL, ramos):
+    total_base_calculo = 0
+    total_pis_psl = 0
+    total_cofins_psl = 0
+    total_soma_pis_cofins = 0
+    for ramo in ramos:
+        total_base_calculo = total_base_calculo + ramo.base_calculo
+        total_pis_psl = total_pis_psl + ramo.pis_psl
+        total_cofins_psl = total_cofins_psl + ramo.cofins_psl
+        total_soma_pis_cofins = total_soma_pis_cofins + ramo.total_soma_pis_cofins
+
+    apuracaoPSL.total_base_calculo = total_base_calculo
+    apuracaoPSL.total_pis_psl = total_pis_psl
+    apuracaoPSL.total_cofins_psl = total_cofins_psl
+    apuracaoPSL.total_soma_pis_cofins = total_soma_pis_cofins
+
+
+    pass

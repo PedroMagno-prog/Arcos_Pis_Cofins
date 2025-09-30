@@ -11,7 +11,19 @@ from django.db.models import Q
 from django.db.models import Max
 from hmac import compare_digest
 from functools import wraps
+import copy
 
+"""
+python manage.py shell
+from ibs.models import UsuarioModel
+from ibs.util import *
+
+usuario  = UsuarioModel()
+usuario.nome = 'admin'
+usuario.email = 'admin@gmail.com'
+usuario.senha = criptografar_senha('admin')
+usuario.save()
+"""
 
 def autenticar_usuario(request):
     print("autenticar_usuario")
@@ -236,15 +248,27 @@ def cadastro_base_calculo_pis_cofins(request):
     return render(request, CADASTRO_BASE_CALCULO_PIS_COFINS_PAGE)
     pass
 
+def cadastro_base_calculo_psl(request):
+    return render(request, CADASTRO_BASE_CALCULO_PSL_PAGE)
+    pass
+
+
 @login_required_usuario
 def cadastro_base_calculo_irpj_csll(request):
     return render(request, CADASTRO_BASE_CALCULO_IRPJ_CSLL_PAGE)
     pass
 
+
 @login_required_usuario
 def cadastro_pis_cofins(request):
     return render(request, CADASTRO_PIS_COFINS_PAGE)
     pass
+
+@login_required_usuario
+def cadastro_psl(request):
+    return render(request, CADASTRO_PSL_PAGE)
+    pass
+
 
 @login_required_usuario
 def lista_base_calculo(request):
@@ -317,6 +341,10 @@ def carregar_contas_base_calculo(request, codigo):
                  contas = ContaBaseCalculoIRPJCSLL.objects.all()
                  return render(request, CADASTRO_BASE_CALCULO_IRPJ_CSLL_PAGE, {'contas' :  contas})
 
+             elif codigo == 3:
+                 contas = ContaBaseCalculoPSL.objects.all()
+                 return render(request, CADASTRO_BASE_CALCULO_PSL_PAGE, {'contas': contas})
+
              else:
                  raise Exception('Erro, o tipo de conta não foi informada.')
 
@@ -329,6 +357,7 @@ def carregar_contas_base_calculo(request, codigo):
         msg = 'Erro ao listar contas, ' + ex.msg
         return render(request, request.path, {'msg' :  msg})
     pass
+
 
 @login_required_usuario
 def cadastrar(request):
@@ -563,6 +592,7 @@ def listar_balancetes(request):
         return render(request, BALANCETE_LISTA_PAGE, {
             'msg':  'Erro no formulário preencha todos os campos.' + str(ex.args)})
         pass
+
 @login_required_usuario
 def cadastrar_base_calculo_pis_cofins(request):
     try:
@@ -594,6 +624,33 @@ def cadastrar_base_calculo_pis_cofins(request):
         return render(request, CADASTRO_BASE_CALCULO_PIS_COFINS_PAGE,
                       {'msg': 'Erro no formulário preencha todos os campos.' + str(ex)})
     pass
+
+def cadastrar_base_calculo_psl(request):
+    try:
+        if request.method == "POST":
+            conta = request.POST['conta']
+            descricao = request.POST['descricao']
+            tipo_conta = request.POST['tipo']
+
+            if not conta or not descricao:
+                msg = 'Erro, por favor preencha todos os campos.'
+                return render(request, CADASTRO_BASE_CALCULO_PSL_PAGE, {'msg' :  msg})
+
+        conta_psl = ContaBaseCalculoPSL()
+        conta_psl.conta = conta
+        conta_psl.descricao = descricao
+        conta_psl.tipo_conta = int(tipo_conta)
+        msg = 'Base de cálculo adicionada com sucesso.'
+        conta_psl.save()
+
+        return render(request, CADASTRO_BASE_CALCULO_PSL_PAGE, {'msg' :  msg})
+
+    except Exception as ex:
+        print(ex.args)
+        return render(request, CADASTRO_BASE_CALCULO_PSL_PAGE,
+                      {'msg': 'Erro no formulário preencha todos os campos.' + str(ex)})
+    pass
+
 
 @login_required_usuario
 def cadastrar_base_calculo_irpj_csll(request):
@@ -987,6 +1044,248 @@ def calcular_pis_cofins(request):
             'mes': int(request.session.get('mes_selecionado', 0)),
         }
         return render(request, CADASTRO_PIS_COFINS_PAGE, context)
+
+
+@login_required_usuario
+def calcular_psl(request):
+    try:
+        if request.method == 'POST':
+
+            ano = request.POST['ano']
+            mes = request.POST['mes']
+
+            # Salvando o ano e mês na sessão
+            request.session['ano_selecionado'] = ano
+            request.session['mes_selecionado'] = mes
+
+            print('ANO BALANCETE : ' + str(ano))
+            print('MES BALANCETE : ' + str(mes))
+
+            apsl = ApuracaoPSL()
+            apsl.ano = int(ano)
+            apsl.mes = int(mes)
+            # Contas selecionadas no balancete.
+            codigo_contas = request.POST.getlist('contas')
+            codigo_contas = [int(i) for i in codigo_contas]
+
+
+            # Contas para tornar a vigência ativa
+            print(codigo_contas)
+            ContaBaseCalculoPSL.objects.filter(codigo__in=codigo_contas).distinct().update(vigencia=True)
+
+
+            # Contas para tornar a vigência inativa
+            ContaBaseCalculoPSL.objects.exclude(codigo__in=codigo_contas).distinct().update(vigencia=False)
+
+            # Lista com as contas selecionadas na de calculo da psl
+            contas = ContaBaseCalculoPSL.objects.filter(codigo__in=codigo_contas).distinct()
+            print(contas)
+
+            # Montar a apuração da psl do balancete.
+
+            # Pegar o balancete de novo e selecionar as contas
+            balancete = Balancete.objects.filter(ano=ano, mes=mes).first()
+            print(balancete)
+
+            # Todos os grupos de contas utilizados no balancete
+            #contas_finais = []
+            # Todas as contas de dentro do balancete selecionadas por cada grupo de conta da lista
+            # de contas anteriores.
+            contas_finais = []
+            # Pegar todos os ramos do balancete
+            lista_ramos = []
+
+            if balancete:
+                balancete = Balancete.objects.filter(ano=balancete.ano, mes=balancete.mes).latest('versao')
+
+                for base_calculo in contas:
+                    contas_balancetes = ContaBalancete.objects.filter(conta_do_razao=base_calculo.conta,
+                                                                      balancete_id=balancete.codigo).all()
+                    # Nessa lista com listas com as contas selecionadas no balancete.
+                    for conta_b in contas_balancetes:
+                        lista_ramos.append(conta_b.grupo_ramo)
+                        contas_finais.append(conta_b)
+
+                print('Contas ')
+                print('Quantidade de contas encontradas : ' + str(len(contas_finais)))
+
+                print(lista_ramos)
+                print(len(lista_ramos))
+                lista_ramos = list(set(lista_ramos))
+                print(lista_ramos)
+                print(len(lista_ramos))
+
+                ramos = agrupamento_somatorio_por_ramo(contas_finais, lista_ramos)
+
+
+                ramos_indefinidos = calcular_remocao_dos_ramos_indefinidos(ramos)
+                somatorio = somatorio_saldo_ramos(ramos)
+
+                if ramos_indefinidos:
+                    print('Somatorio ramos: ', locale_br(somatorio))
+                    percentuais = calcular_percentual_relativo_por_ramo(ramos, somatorio)
+
+
+                    print('Ramos Indefindos!')
+                    for r in ramos_indefinidos:
+                        print(r)
+
+                    print('Ramos da lista')
+                    for perc in percentuais:
+                        print('Ramos %s : valor %s '% (perc[0], perc[1]))
+
+                    valores_diluidos_por_ramo = []
+
+                    for ri in ramos_indefinidos:
+                        valor_diluido = calcular_valor_diluicao_por_ramo_indefinido(ri, percentuais)
+                        valores_diluidos_por_ramo.append(valor_diluido)
+
+                    for valor_diluido in valores_diluidos_por_ramo:
+                        for valor in valor_diluido:
+                            print('Ramos %s : valor %s diluição : %s '
+                                  % (valor[0], valor[1], locale_br(valor[2])))
+                        print('-------' * 20)
+                    print('-----'*20)
+
+                    for valor_diluido in valores_diluidos_por_ramo:
+                        calcular_valor_base_ramo(ramos, valor_diluido)
+                        pass
+
+                # Aplicação da alicota
+                ramos = aplicar_alicota_pis_cofins_psl(ramos)
+
+                # Calcular totais
+                calcular_totais_apuracao_psl(apsl, ramos)
+                apsl.ramos = ramos
+
+                # Salvar o objeto da psl no banco de dados
+                apsl.save()
+
+                # Salvar os ramos
+                for ramo in apsl.ramos:
+                    ramo.apuracao_psl = apsl
+                    ramo.save()
+
+                contas_psl = []
+                # Associar as contas da tela com as contas selecionadas na apuração
+                for c in contas:
+                    conta = ContaApuracaoPSL()
+                    conta.conta = c.conta
+                    conta.descricao = c.descricao
+                    contas_psl.append(conta)
+
+                apsl.contas = contas_psl
+                # Salvar as contas
+                for conta in apsl.contas:
+                    conta.apuracao_psl = apsl
+                    conta.save()
+
+
+                apsl.total_base_calculo = locale_br(apsl.total_base_calculo)
+                apsl.total_pis_psl = locale_br(apsl.total_pis_psl)
+                apsl.total_cofins_psl = locale_br(apsl.total_cofins_psl)
+                apsl.total_soma_pis_cofins = locale_br(apsl.total_soma_pis_cofins)
+
+                for ramo in ramos:
+                    ramo.base_calculo = locale_br(ramo.base_calculo)
+                    ramo.pis_psl = locale_br(ramo.pis_psl)
+                    ramo.cofins_psl = locale_br(ramo.cofins_psl)
+                    ramo.total_soma_pis_cofins = locale_br(ramo.total_soma_pis_cofins)
+                    print(ramo)
+
+
+
+            else:
+                raise Exception('Balancete não encontrado.')
+
+
+
+            apsl.mes = convert_mes_texto(apsl.mes)
+            print(apsl)
+
+            return render(request, CADASTRO_PSL_PAGE, {'apsl' : apsl, 'contas' :  contas})
+
+
+        else:
+            raise Exception('Erro, use POST para formulários ')
+
+
+    except Exception as ex:
+        msg = ex.args
+
+        return render(request, CADASTRO_PSL_PAGE, {'msg' : msg})
+
+    pass
+
+
+@login_required_usuario
+def carregar_dados_psl(request):
+    try:
+        if request.method == 'POST':
+
+            ano = request.POST['ano']
+            mes = request.POST['mes']
+
+            if ano is None or len(ano) <= 0:
+                msg = 'Informe o ano do balancete.'
+                return render(request, CADASTRO_PSL_PAGE, {'msg': msg})
+
+            elif mes is None or len(mes) <= 0:
+                msg = 'Informe o mês do balancete.'
+                return render(request, CADASTRO_PSL_PAGE, {'msg': msg})
+
+                # Salvando o ano e mês na sessão
+                request.session['ano_selecionado'] = ano
+                request.session['mes_selecionado'] = mes
+
+            ano = int(ano)
+            mes = int(mes)
+
+            balancete = Balancete.objects.filter(ano=ano, mes=mes).first()
+            print(balancete)
+
+            if balancete:
+                balancete = Balancete.objects.filter(ano=balancete.ano, mes=balancete.mes).latest('versao')
+
+
+                base_calculo_psl = ContaBaseCalculoPSL.objects.all()
+                print('Base de calculo')
+                print(base_calculo_psl)
+
+                contas = []
+
+                for base_calculo in base_calculo_psl:
+                    conta_balancete = ContaBalancete.objects.filter(conta_do_razao=base_calculo.conta,
+                                                                      balancete_id=balancete.codigo).first()
+
+                    if conta_balancete:
+                        contas.append(base_calculo)
+
+                return render(request, CADASTRO_PSL_PAGE, {'contas' :  contas, 'ano':
+                    ano, 'mes':  mes})
+
+
+
+            else:
+                raise Exception('Balancete não encontrado.')
+
+        else:
+            raise Exception('Erro, use POST para formulários ')
+
+
+    except Exception as ex:
+        print(ex.args)
+        context = {
+            'msg_1': 'Erro, ' + str(ex.args),
+            'ano_selecionado': request.session.get('ano_selecionado'),
+            'mes_selecionado': request.session.get('mes_selecionado'),
+            'ano': int(request.session.get('ano_selecionado', 0)),
+            'mes': int(request.session.get('mes_selecionado', 0)),
+        }
+        return render(request, CADASTRO_PSL_PAGE, context)
+
+    pass
+
 
 @login_required_usuario
 def exportar_csv_pis_cofins(request, ano, mes):
