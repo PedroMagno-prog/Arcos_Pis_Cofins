@@ -3,6 +3,7 @@ import csv
 import locale
 import io
 import hashlib
+from django.db.models import Sum, FloatField
 
 def criptografar_senha(senha: str) -> str:
     """
@@ -595,3 +596,23 @@ def calcular_totais_apuracao_psl(apuracaoPSL, ramos):
 
 
     pass
+
+def soma_movimento_conta_psl(conta_base, balancete):
+    """
+    Calcula o movimento total de UMA conta-base de forma eficiente,
+    usando aggregate() do Django.
+    """
+    # Filtra os movimentos e já pede a soma total (Sum)
+
+    resultado = ContaBalancete.objects.filter(
+        conta_do_razao=conta_base.conta,  # Link da ContaBase para ContaDoRazao
+        balancete_id=balancete.codigo  # Link para o balancete
+    ).aggregate(
+        # 'total_movimento' é um nome que criei para o resultado
+        total_movimento=Sum('saldo_acumulado', output_field=FloatField())
+    )
+
+    total = resultado.get('total_movimento')
+
+    # Retorna o total, ou 0.0 se não houver movimentos
+    return total if total is not None else 0.0

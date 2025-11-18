@@ -635,6 +635,10 @@ def cadastrar_base_calculo_psl(request):
             if not conta or not descricao:
                 msg = 'Erro, por favor preencha todos os campos.'
                 return render(request, CADASTRO_BASE_CALCULO_PSL_PAGE, {'msg' :  msg})
+            # Trava para evitar Contas Duplicadas
+            if ContaBaseCalculoPSL.objects.filter(conta=conta).exists():  # Conta  já existe no banco?
+                msg = f'Erro: A conta {conta} já está cadastrada.'
+                return render(request, CADASTRO_BASE_CALCULO_PSL_PAGE, {'msg': msg})
 
         conta_psl = ContaBaseCalculoPSL()
         conta_psl.conta = conta
@@ -1061,9 +1065,14 @@ def calcular_psl(request):
             print('ANO BALANCETE : ' + str(ano))
             print('MES BALANCETE : ' + str(mes))
 
+            ano = int(ano)
+            mes = int(mes)
+
+            # apsl será usada no Template html
             apsl = ApuracaoPSL()
-            apsl.ano = int(ano)
-            apsl.mes = int(mes)
+            apsl.ano = ano
+            apsl.mes = mes
+
             # Contas selecionadas no balancete.
             codigo_contas = request.POST.getlist('contas')
             codigo_contas = [int(i) for i in codigo_contas]
@@ -1097,6 +1106,30 @@ def calcular_psl(request):
 
             if balancete:
                 balancete = Balancete.objects.filter(ano=balancete.ano, mes=balancete.mes).latest('versao')
+
+                # modificação para SOMAR o movimento das contas antes de serparar por ramo
+                contas_com_total = list(contas)
+
+                base_calculo_psl = 0
+
+                print('Calculando totais individuais por conta...')
+                for c in contas_com_total:
+                    # 1. Chamamos a função para calcular o total
+                    total_conta = soma_movimento_conta_psl(c, balancete)
+
+                    # 2. Anexamos o resultado ao objeto 'c'
+                    c.total_movimento_conta = total_conta
+
+                    # 3. Anexamos o valor formatado (você já usa locale_br)
+                    c.total_movimento_conta_formatado = locale_br(total_conta)
+
+                    base_calculo_psl += total_conta
+
+                    print(f'Conta: {c.descricao}, Total: {c.total_movimento_conta_formatado}')
+
+                total_pis_psl = locale_br(base_calculo_psl*0.0065)
+                total_cofins_psl = locale_br(base_calculo_psl * 0.04)
+                base_calculo_psl = locale_br(base_calculo_psl)
 
                 for base_calculo in contas:
                     contas_balancetes = ContaBalancete.objects.filter(conta_do_razao=base_calculo.conta,
@@ -1203,8 +1236,9 @@ def calcular_psl(request):
             apsl.mes = convert_mes_texto(apsl.mes)
             print(apsl)
 
-            return render(request, CADASTRO_PSL_PAGE, {'apsl' : apsl, 'contas' :  contas})
-
+            return render(request, CADASTRO_PSL_PAGE, {'apsl' : apsl,
+            'contas' :  contas_com_total, 'ano': ano, 'mes': mes, 'base_calculo_psl': base_calculo_psl,
+            'total_pis_psl': total_pis_psl, 'total_cofins_psl':total_cofins_psl})
 
         else:
             raise Exception('Erro, use POST para formulários ')

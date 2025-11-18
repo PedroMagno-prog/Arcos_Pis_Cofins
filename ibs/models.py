@@ -269,7 +269,7 @@ class ContaBaseCalculoPSL(models.Model):
         db_table = 'contabasecalculopsl'
 
     codigo = models.AutoField(primary_key=True)
-    conta = models.CharField(null=False, max_length=255)
+    conta = models.CharField(null=False, max_length=255, unique=True)
     descricao = models.CharField(null=False, max_length=255)
     data_cadastro = models.DateField(auto_now_add=True)
 
