@@ -365,7 +365,7 @@ class ApuracaoPSL(models.Model):
     # Calculado -> Soma = Pis + Cofins
     total_soma_pis_cofins = models.FloatField(null=False, default=0)
 
-    data_cadastro = models.DateField(default=datetime.date.today)
+    data_cadastro = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f'{self.codigo}, {self.ano}, {self.mes},{self.data_cadastro},' \
@@ -462,6 +462,7 @@ class MovimentacaoSINPAGAC(models.Model):
     cod_cia = models.CharField(null=False, max_length=255)
     dt_base = models.CharField(null=False, max_length=255)
     cod_coss= models.CharField(null=False, max_length=255)
+    cod_ramo = models.CharField(null=False, max_length=255, default='')
     num_sin = models.CharField(null=False, max_length=255)
     num_apol = models.CharField(null=False, max_length=255)
     g_cpf_bnf = models.CharField(null=False, max_length=255)
@@ -726,6 +727,7 @@ class MovimentacaoRecuperadosNovo(models.Model):
     tipo_sin = models.CharField(null=False, max_length=255)
     num_sin = models.CharField(null=False, max_length=255)
     cod_ramo = models.CharField(null=False, max_length=255)
+    cod_ramo_susep = models.CharField(null=False, max_length=255, default='')
     baixa_ind = models.FloatField(null=False, max_length=255, default= 0)
     baixa_salv = models.FloatField(null=False, max_length=255,default= 0)
     baixa_res = models.FloatField(null=False, max_length=255 , default= 0)
@@ -735,18 +737,20 @@ class MovimentacaoRecuperadosNovo(models.Model):
                                   null=True)
 
     def __str__(self):
-        return f'{self.codigo}, {self.tipo_sin},{self.cod_ramo}, {self.num_sin}, {self.baixa_ind}, {self.baixa_salv}, {self.baixa_res}'
+        return f'{self.codigo}, {self.tipo_sin},{self.cod_ramo}, {self.cod_ramo_susep}' \
+               f'{self.num_sin}, {self.baixa_ind}, {self.baixa_salv}, {self.baixa_res}'
 
     def __repr__(self):
-        return f'{self.codigo}, {self.tipo_sin},{self.cod_ramo}, {self.num_sin}, {self.baixa_ind}, {self.baixa_salv}, {self.baixa_res}'
+        return f'{self.codigo}, {self.tipo_sin},{self.cod_ramo}, {self.cod_ramo_susep}' \
+               f'{self.num_sin}, {self.baixa_ind}, {self.baixa_salv}, {self.baixa_res}'
 
     pass
 
 
 
-class BaseCalculoPisCofins(models.Model):
+class ApuracaoPisCofins(models.Model):
     class Meta:
-        db_table = 'basecalculopiscofins'
+        db_table = 'apuracaopiscofins'
 
     codigo = models.AutoField(primary_key=True)
     soma_receita_balancete = models.FloatField(null=False)
@@ -757,37 +761,232 @@ class BaseCalculoPisCofins(models.Model):
     pis_retido = models.FloatField(null=False, default=0)
     compensacao_pis = models.FloatField(null=False, default=0)
     pis_recolher = models.FloatField(null=False)
-    pis_check = models.FloatField(null=False)
     pis_darf = models.FloatField(null=False)
-    pis_dif_darf_recolher = models.FloatField(null=False)
-    pis_contabilizar = models.FloatField(null=False)
     pis = models.FloatField(null=False)
 
     cofins_retido = models.FloatField(null=False, default=0)
     compensacao_cofins = models.FloatField(null=False, default=0)
     cofins_recolher = models.FloatField(null=False)
-    cofins_check = models.FloatField(null=False)
     cofins_darf = models.FloatField(null=False)
-    cofins_dif_darf_recolher = models.FloatField(null=False)
-    cofins_contabilizar = models.FloatField(null=False)
     cofins = models.FloatField(null=False)
+
+    relatorio_sinpag = models.ForeignKey(RelatorioSINPAG, on_delete=models.SET_NULL ,null=True)
+    relatorio_sinpagac = models.ForeignKey(RelatorioSINPAGAC, on_delete=models.SET_NULL ,null=True)
+    relatorio_salvados_vendidos = models.ForeignKey(RelatorioSalvadosVendidosNovos, on_delete=models.SET_NULL ,null=True)
+    relatorio_recuperados = models.ForeignKey(RelatorioRecuperadosNovo, on_delete=models.SET_NULL ,null=True)
 
     def __str__(self):
         return f'{self.codigo}, {self.soma_receita_balancete}, {self.pis_retido}, {self.compensacao_pis},' \
-               f'{self.pis_recolher}, {self.pis_check}, {self.pis_recolher}, {self.pis_darf}, {self.pis_dif_darf_recolher},' \
-               f'{self.pis_contabilizar}, {self.pis} '\
+               f'{self.pis_recolher},{self.pis_darf},,' \
+               f'{self.pis} '\
                f'{self.cofins_retido}, {self.compensacao_cofins}, ' \
-               f'{self.cofins_recolher}, {self.pis_check}, {self.cofins_recolher}, {self.cofins_darf}, {self.cofins_dif_darf_recolher}, ' \
-               f'{self.cofins_contabilizar}, {self.cofins}, {self.ano}, {self.mes}'
+               f'{self.cofins_recolher},' \
+               f'{self.cofins}, {self.ano}, {self.mes}, {self.data_entrada}'
+
+
+
+
+    pass
+
+
+class ContaApuracaoPisCofins(models.Model):
+    class Meta:
+        db_table = 'contapuracaopiscofins'
+
+    codigo = models.AutoField(primary_key=True)
+    conta = models.CharField(null=False, max_length=255)
+    descricao = models.CharField(null=False, max_length=255, default='')
+    soma_movimento = models.FloatField(null=False)
+
+    apuracao_pis_cofins = models.ForeignKey(ApuracaoPisCofins, on_delete=models.CASCADE,
+                                  null=False)
+
+    def __str__(self):
+        return f'{self.codigo}, {self.conta}, {self.descricao}, {self.soma_movimento}'
 
     def __repr__(self):
-        return f'{self.codigo}, {self.soma_receita_balancete}, {self.pis_retido}, {self.compensacao_pis},' \
-               f'{self.pis_recolher}, {self.pis_check}, {self.pis_recolher}, {self.pis_darf}, {self.pis_dif_darf_recolher},' \
-               f'{self.pis_contabilizar}, {self.pis} '\
-               f'{self.cofins_retido}, {self.compensacao_cofins}, ' \
-               f'{self.cofins_recolher}, {self.pis_check}, {self.cofins_recolher}, {self.cofins_darf}, {self.cofins_dif_darf_recolher}, ' \
-               f'{self.cofins_contabilizar}, {self.cofins}, {self.ano}, {self.mes}'
+        return f'{self.codigo}, {self.conta}, {self.descricao}, {self.soma_movimento}'
 
+    pass
+
+
+
+# APR Aberto Por Ramo
+class ApuracaoPisCofinsAPR(models.Model):
+    class Meta:
+        db_table = 'apuracaopiscofinsapr'
+
+    codigo = models.AutoField(primary_key=True)
+    data_entrada = models.DateTimeField(auto_now_add=True)
+    ano = models.IntegerField(null=False, default=0)
+    mes = models.IntegerField(null=False, default=0)
+
+    relatorio_sinpag = models.ForeignKey(RelatorioSINPAG, on_delete=models.SET_NULL ,null=True)
+    relatorio_sinpagac = models.ForeignKey(RelatorioSINPAGAC, on_delete=models.SET_NULL ,null=True)
+    relatorio_salvados_vendidos = models.ForeignKey(RelatorioSalvadosVendidosNovos, on_delete=models.SET_NULL ,null=True)
+    relatorio_recuperados = models.ForeignKey(RelatorioRecuperadosNovo, on_delete=models.SET_NULL ,null=True)
+
+    def __str__(self):
+        return f'{self.codigo}, {self.ano}, {self.mes}, {self.data_entrada}'
+
+    pass
+
+class RamoAgrupadoPisCofinsAPR(models.Model):
+    class Meta:
+        db_table = 'ramoagrupadopiscofinsapr'
+
+    codigo = models.AutoField(primary_key=True)
+    ramo = models.CharField(max_length=100, null=False)
+
+    # Somatorio do saldo do ramo de cada conta do balancete por ramo definido e a diluição.
+    receita = models.FloatField(null=False, default=0)
+
+    # Base de calculo Relação da receita e os valores do relatorios.
+    base_calculo = models.FloatField(null=False)
+
+    # Calculado
+    pis_apr = models.FloatField(null=False)
+    # Calculado
+    cofins_apr = models.FloatField(null=False)
+
+    apuracao_piscofins_apr = models.ForeignKey(ApuracaoPisCofinsAPR, on_delete=models.CASCADE,
+                                  null=False)
+
+    def __str__(self):
+        return f'{self.codigo}, {self.ramo }, {self.receita}, {self.base_calculo}, ' \
+               f'{self.pis_apr}, {self.cofins_apr},'
+
+    def __repr__(self):
+        return f'{self.codigo}, {self.ramo}, {self.receita}, {self.base_calculo}, ' \
+               f'{self.pis_apr}, {self.cofins_apr},'
+
+    pass
+
+class ContaApuracaoPisCofinsAPR(models.Model):
+    class Meta:
+        db_table = 'contaapuracaopiscofinsapr'
+
+    codigo = models.AutoField(primary_key=True)
+    conta = models.CharField(null=False, max_length=255)
+    descricao = models.CharField(null=False, max_length=255, default='')
+
+    apuracao_piscofins_apr = models.ForeignKey(ApuracaoPisCofinsAPR, on_delete=models.CASCADE,
+                                  null=False)
+
+    def __str__(self):
+        return f'{self.codigo}, {self.conta}, {self.descricao}'
+
+    def __repr__(self):
+        return f'{self.codigo}, {self.conta}, {self.descricao}'
+
+    pass
+
+
+class RamoAgrupadoPisCofinsRelatorioSinpag(models.Model):
+    class Meta:
+        db_table = 'ramoagrupadopiscofinsrelatoriosinpag'
+
+    codigo = models.AutoField(primary_key=True)
+
+    ramo = models.CharField(max_length=100, null=False)
+
+    # vr_mov -> agrupado
+    soma_vr_mov = models.FloatField(null=False, default=0)
+
+    # vr_mov -> agrupado
+    soma_vr_cos_ced = models.FloatField(null=False)
+
+    dif_soma_vr_mod_cos_ced = models.FloatField(null=False, default=0)
+
+    # tipo de sinistro
+    tp_sin = models.IntegerField(null=False)
+
+    apuracao_piscofins_apr = models.ForeignKey(ApuracaoPisCofinsAPR, on_delete=models.CASCADE,
+                                  null=False, related_name='ramos_sinpag')
+
+    def __str__(self):
+        return f'{self.codigo}, {self.ramo }, {self.tp_sin}, {self.soma_vr_mov} , {self.soma_vr_cos_ced}, {self.dif_soma_vr_mod_cos_ced} '
+
+    def __repr__(self):
+        return f'{self.codigo}, {self.ramo},  {self.tp_sin}, {self.soma_vr_mov} , {self.soma_vr_cos_ced}, {self.dif_soma_vr_mod_cos_ced} '
+
+    pass
+
+class RamoAgrupadoPisCofinsRelatorioSinpagac(models.Model):
+    class Meta:
+        db_table = 'ramoagrupadopiscofinsrelatoriosinpagac'
+
+    codigo = models.AutoField(primary_key=True)
+
+    ramo = models.CharField(max_length=100, null=False)
+
+    # vr_mov -> agrupado
+    soma_vr_mov = models.FloatField(null=False, default=0)
+
+    # tipo de sinistro
+    tp_sin = models.IntegerField(null=False)
+
+    apuracao_piscofins_apr = models.ForeignKey(ApuracaoPisCofinsAPR, on_delete=models.CASCADE,
+                                  null=False, related_name='ramos_sinpagac')
+
+    def __str__(self):
+        return f'{self.codigo}, {self.ramo }, {self.tp_sin}, {self.soma_vr_mov} '
+
+    def __repr__(self):
+        return f'{self.codigo}, {self.ramo}, {self.tp_sin}, {self.soma_vr_mov}'
+
+    pass
+
+class RamoAgrupadoPisCofinsRelatorioSalvadosVendidos(models.Model):
+    class Meta:
+        db_table = 'ramoagrupadopiscofinsrelatoriosalvadosvendidos'
+
+    codigo = models.AutoField(primary_key=True)
+
+    ramo = models.CharField(max_length=100, null=False)
+
+    # vr_mov -> agrupado
+    soma_vr_mov = models.FloatField(null=False, default=0)
+
+
+    tipo_mov = models.IntegerField(null=False)
+
+    apuracao_piscofins_apr = models.ForeignKey(ApuracaoPisCofinsAPR, on_delete=models.CASCADE,
+                                  null=False, related_name='ramos_salvadosvendidos')
+
+    def __str__(self):
+        return f'{self.codigo}, {self.ramo }, {self.tipo_mov}, {self.soma_vr_mov} '
+
+    def __repr__(self):
+        return f'{self.codigo}, {self.ramo}, {self.tipo_mov}, {self.soma_vr_mov}'
+
+    pass
+
+class RamoAgrupadoPisCofinsRelatorioRecuperados(models.Model):
+    class Meta:
+        db_table = 'ramoagrupadopiscofinsrelatoriorecuperados'
+
+    codigo = models.AutoField(primary_key=True)
+
+    ramo = models.CharField(max_length=100, null=False)
+
+    soma_baixa_ind = models.FloatField(null=False, default=0)
+    soma_baixa_res = models.FloatField(null=False, default=0)
+    soma_baixa_salv = models.FloatField(null=False, default=0)
+    dif_soma_baixa_ind_res_salv = models.FloatField(null=False, default=0)
+
+    tipo_sin = models.CharField(max_length=100, null=False)
+
+    apuracao_piscofins_apr = models.ForeignKey(ApuracaoPisCofinsAPR, on_delete=models.CASCADE,
+                                  null=False, related_name='ramos_recuperados')
+
+    def __str__(self):
+        return f'{self.codigo}, {self.ramo }, {self.tipo_sin}, {self.soma_baixa_ind}, ' \
+               f'{self.soma_baixa_res}, {self.soma_baixa_salv}, {self.dif_soma_baixa_ind_res_salv}'
+
+    def __repr__(self):
+        return f'{self.codigo}, {self.ramo}, {self.tipo_sin}, {self.soma_baixa_ind}, ' \
+               f'{self.soma_baixa_res}, {self.soma_baixa_salv}, {self.dif_soma_baixa_ind_res_salv}'
 
     pass
 

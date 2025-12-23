@@ -31,16 +31,8 @@
           <a class="dropdown-item" href="{% url 'ibs:lista-balancetes' %}">Exibir balancetes e relatórios </a>
         </div>
 
+
         <li class="nav-item dropdown">
-        <a class="nav-link dropdown-toggle" href="#" id="dropdown03" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Impostos</a>
-        <div class="dropdown-menu" aria-labelledby="dropdown03">
-          <a class="dropdown-item" href="{% url 'ibs:cadastro-pis-cofins' %}">PIS/COFINS </a>
-          <a class="dropdown-item" href="">IRPJ/CSLL </a>
-          <a class="dropdown-item" href="{% url 'ibs:cadastro-psl' %}">PSL </a>
-        </div>
-
-
-      <li class="nav-item dropdown">
         <a class="nav-link dropdown-toggle" href="#" id="dropdown04" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Vincular Conta </a>
         <div class="dropdown-menu" aria-labelledby="dropdown04">
           <a class="dropdown-item" href="{% url 'ibs:cadastro-conta-base-pis-cofins' %}">PIS/COFINS </a>
@@ -48,6 +40,26 @@
           <a class="dropdown-item" href="{% url 'ibs:cadastro-conta-base-psl' %}">PSL  </a>
         </div>
 
+      </li>
+        <li class="nav-item dropdown">
+        <a class="nav-link dropdown-toggle" href="#" id="dropdown03" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Apuração</a>
+        <div class="dropdown-menu" aria-labelledby="dropdown03">
+          <a class="dropdown-item" href="{% url 'ibs:cadastro-pis-cofins' %}">PIS/COFINS </a>
+           <a class="dropdown-item" href="{% url 'ibs:cadastro-pis-cofins-aberto-ramo' %}">PIS/COFINS Aberto Por Ramo</a>
+          <a class="dropdown-item" href="">IRPJ/CSLL </a>
+          <a class="dropdown-item" href="{% url 'ibs:cadastro-psl' %}">PSL </a>
+        </div>
+        </li>
+
+      <li class="nav-item dropdown">
+        <a class="nav-link dropdown-toggle" href="#" id="dropdown05" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Consultas</a>
+        <div class="dropdown-menu" aria-labelledby="dropdown05">
+          <a class="dropdown-item" href="{% url 'ibs:consulta-pis-cofins' %}">PIS/COFINS </a>
+          <a class="dropdown-item" href="{% url 'ibs:consulta-pis-cofins-aberto-ramo' %}">PIS/COFINS Aberto Por Ramo </a>
+
+          <a class="dropdown-item" href="">IRPJ/CSLL </a>
+          <a class="dropdown-item" href="{% url 'ibs:consulta-psl' %}">PSL </a>
+        </div>
       </li>
 
       <li>

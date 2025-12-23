@@ -10,8 +10,25 @@ urlpatterns = [
     path('Cadastro/', cadastro_page, name='cadastro'),
     path('resetar-senha/', resetar_senha, name='resetar-senha'),
 
+    #Paginas de consultas
+    path('Consulta-psl/', consulta_psl_page, name='consulta-psl'),
+    path('Consulta-pis-cofins/', consulta_pis_cofins_page, name='consulta-pis-cofins'),
+
+
+    #Consultas
+    path('Consultar-pis-cofins/', consultar_pis_cofins, name='consultar-pis-cofins'),
+    path('Consultar-psl/', consultar_psl, name='consultar-psl'),
+    path('Consultar-pis-cofins-apr/', consultar_pis_cofins_apr, name='consultar-pis-cofins-apr'),
+
     path('Cadastro-Conta-Calculo-Base-psl/', cadastro_base_calculo_psl,
          name='cadastro-conta-base-psl'),
+
+    path('Cadastro-pis-cofins-aberto-ramo/', cadastro_pis_cofins_aberto_ramo,
+         name='cadastro-pis-cofins-aberto-ramo'),
+
+    path('Consulta-pis-cofins-aberto-ramo/', consulta_pis_cofins_page_aberto_ramo, name='consulta-pis-cofins-aberto-ramo'),
+    path('Calcular-pis-cofins-aberto-ramo/<int:ano>/<int:mes>', calcular_pis_cofins_aberto_ramo, name='calcular-pis-cofins-aberto-ramo'),
+    path('Carregar-dados-pis-cofins-aberto-ramo/', carregar_dados_pis_cofins_aberto_ramo, name='carregar-dados-pis-cofins-aberto-ramo'),
 
 
     path('Cadastro-pis-cofins/', cadastro_pis_cofins, name='cadastro-pis-cofins'),
