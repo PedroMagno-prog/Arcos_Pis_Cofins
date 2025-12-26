@@ -1,0 +1,1256 @@
+[
+{
+  "model": "ibs.contabasecalculopiscofins",
+  "pk": 1,
+  "fields": {
+    "conta": "31111001",
+    "descricao": "PR.EMITID EMIS.PROPR",
+    "data_cadastro": "2025-09-09",
+    "vigencia": true,
+    "tipo_conta": 3
+  }
+},
+{
+  "model": "ibs.contabasecalculopiscofins",
+  "pk": 2,
+  "fields": {
+    "conta": "31111065",
+    "descricao": "PR.DIR.EMIT MANUAL",
+    "data_cadastro": "2025-09-09",
+    "vigencia": true,
+    "tipo_conta": 3
+  }
+},
+{
+  "model": "ibs.contabasecalculopiscofins",
+  "pk": 3,
+  "fields": {
+    "conta": "31111021",
+    "descricao": "PR.CANCEL EMIS.PROPR",
+    "data_cadastro": "2025-09-09",
+    "vigencia": true,
+    "tipo_conta": 3
+  }
+},
+{
+  "model": "ibs.contabasecalculopiscofins",
+  "pk": 4,
+  "fields": {
+    "conta": "31111041",
+    "descricao": "PR.RESTIT.EMIS.PROPR",
+    "data_cadastro": "2025-09-09",
+    "vigencia": true,
+    "tipo_conta": 3
+  }
+},
+{
+  "model": "ibs.contabasecalculopiscofins",
+  "pk": 5,
+  "fields": {
+    "conta": "31111067",
+    "descricao": "PR.DIRET REST.MANUAL",
+    "data_cadastro": "2025-09-09",
+    "vigencia": true,
+    "tipo_conta": 3
+  }
+},
+{
+  "model": "ibs.contabasecalculopiscofins",
+  "pk": 6,
+  "fields": {
+    "conta": "31111004",
+    "descricao": "PR.ACEITOS COSSEG AC",
+    "data_cadastro": "2025-09-09",
+    "vigencia": true,
+    "tipo_conta": 3
+  }
+},
+{
+  "model": "ibs.contabasecalculopiscofins",
+  "pk": 7,
+  "fields": {
+    "conta": "31111024",
+    "descricao": "PR.CANCEL COSSEG.AC",
+    "data_cadastro": "2025-09-09",
+    "vigencia": true,
+    "tipo_conta": 3
+  }
+},
+{
+  "model": "ibs.contabasecalculopiscofins",
+  "pk": 8,
+  "fields": {
+    "conta": "31111042",
+    "descricao": "PR.RESTIT.COSSEG AC",
+    "data_cadastro": "2025-09-09",
+    "vigencia": true,
+    "tipo_conta": 3
+  }
+},
+{
+  "model": "ibs.contabasecalculopiscofins",
+  "pk": 9,
+  "fields": {
+    "conta": "31112001",
+    "descricao": "PR.CEDIDO COSSEGURO",
+    "data_cadastro": "2025-09-09",
+    "vigencia": true,
+    "tipo_conta": 3
+  }
+},
+{
+  "model": "ibs.contabasecalculopiscofins",
+  "pk": 10,
+  "fields": {
+    "conta": "31112070",
+    "descricao": "(-) COM S/ COS CED",
+    "data_cadastro": "2025-09-09",
+    "vigencia": true,
+    "tipo_conta": 3
+  }
+},
+{
+  "model": "ibs.contabasecalculopiscofins",
+  "pk": 11,
+  "fields": {
+    "conta": "31112021",
+    "descricao": "PR.CANCEL COSSEG CED",
+    "data_cadastro": "2025-09-09",
+    "vigencia": true,
+    "tipo_conta": 3
+  }
+},
+{
+  "model": "ibs.contabasecalculopiscofins",
+  "pk": 12,
+  "fields": {
+    "conta": "31112028",
+    "descricao": "PR.REST. COSSEG CED",
+    "data_cadastro": "2025-09-09",
+    "vigencia": true,
+    "tipo_conta": 3
+  }
+},
+{
+  "model": "ibs.contabasecalculopiscofins",
+  "pk": 13,
+  "fields": {
+    "conta": "31111005",
+    "descricao": "PR R.V.N.E.",
+    "data_cadastro": "2025-09-09",
+    "vigencia": true,
+    "tipo_conta": 3
+  }
+},
+{
+  "model": "ibs.contabasecalculopiscofins",
+  "pk": 14,
+  "fields": {
+    "conta": "31211001",
+    "descricao": "PPNG RISCO EMITIDO",
+    "data_cadastro": "2025-09-09",
+    "vigencia": true,
+    "tipo_conta": 3
+  }
+},
+{
+  "model": "ibs.contabasecalculopiscofins",
+  "pk": 15,
+  "fields": {
+    "conta": "31211007",
+    "descricao": "PPNG COSS CEDIDO",
+    "data_cadastro": "2025-09-09",
+    "vigencia": true,
+    "tipo_conta": 3
+  }
+},
+{
+  "model": "ibs.contabasecalculopiscofins",
+  "pk": 16,
+  "fields": {
+    "conta": "31211003",
+    "descricao": "PPNG COSSEG ACEITO",
+    "data_cadastro": "2025-09-09",
+    "vigencia": true,
+    "tipo_conta": 3
+  }
+},
+{
+  "model": "ibs.contabasecalculopiscofins",
+  "pk": 17,
+  "fields": {
+    "conta": "31211002",
+    "descricao": "PPNG RVNE",
+    "data_cadastro": "2025-09-09",
+    "vigencia": true,
+    "tipo_conta": 3
+  }
+},
+{
+  "model": "ibs.contabasecalculopiscofins",
+  "pk": 18,
+  "fields": {
+    "conta": "35199996",
+    "descricao": "OUTRAS RECEITAS FERS",
+    "data_cadastro": "2025-09-09",
+    "vigencia": true,
+    "tipo_conta": 3
+  }
+},
+{
+  "model": "ibs.contabasecalculopiscofins",
+  "pk": 19,
+  "fields": {
+    "conta": "35199999",
+    "descricao": "OUTRAS RECEIT OPERAC",
+    "data_cadastro": "2025-09-09",
+    "vigencia": true,
+    "tipo_conta": 3
+  }
+},
+{
+  "model": "ibs.contabasecalculopiscofins",
+  "pk": 20,
+  "fields": {
+    "conta": "31291068",
+    "descricao": "PART.S/LUCROS",
+    "data_cadastro": "2025-09-09",
+    "vigencia": true,
+    "tipo_conta": 3
+  }
+},
+{
+  "model": "ibs.contabasecalculopiscofins",
+  "pk": 21,
+  "fields": {
+    "conta": "31112002",
+    "descricao": "PR.RESSEG CEDID LCL",
+    "data_cadastro": "2025-09-09",
+    "vigencia": true,
+    "tipo_conta": 3
+  }
+},
+{
+  "model": "ibs.contabasecalculopiscofins",
+  "pk": 22,
+  "fields": {
+    "conta": "31112041",
+    "descricao": "PMD EMIT RESS LCL",
+    "data_cadastro": "2025-09-09",
+    "vigencia": true,
+    "tipo_conta": 3
+  }
+},
+{
+  "model": "ibs.contabasecalculopiscofins",
+  "pk": 23,
+  "fields": {
+    "conta": "31112044",
+    "descricao": "P.R.EMIT RESS LCL",
+    "data_cadastro": "2025-09-09",
+    "vigencia": true,
+    "tipo_conta": 3
+  }
+},
+{
+  "model": "ibs.contabasecalculopiscofins",
+  "pk": 24,
+  "fields": {
+    "conta": "31112047",
+    "descricao": "AJUSTE PR.EM RES LCL",
+    "data_cadastro": "2025-09-09",
+    "vigencia": true,
+    "tipo_conta": 3
+  }
+},
+{
+  "model": "ibs.contabasecalculopiscofins",
+  "pk": 25,
+  "fields": {
+    "conta": "31112078",
+    "descricao": "PRM Prp SompoRe",
+    "data_cadastro": "2025-09-09",
+    "vigencia": true,
+    "tipo_conta": 3
+  }
+},
+{
+  "model": "ibs.contabasecalculopiscofins",
+  "pk": 26,
+  "fields": {
+    "conta": "31112080",
+    "descricao": "PMD emitido SompoRe",
+    "data_cadastro": "2025-09-09",
+    "vigencia": true,
+    "tipo_conta": 3
+  }
+},
+{
+  "model": "ibs.contabasecalculopiscofins",
+  "pk": 27,
+  "fields": {
+    "conta": "31112082",
+    "descricao": "Reintg + RPP SompoRe",
+    "data_cadastro": "2025-09-09",
+    "vigencia": true,
+    "tipo_conta": 3
+  }
+},
+{
+  "model": "ibs.contabasecalculopiscofins",
+  "pk": 28,
+  "fields": {
+    "conta": "31112011",
+    "descricao": "COMIS S/ PR RES LCL",
+    "data_cadastro": "2025-09-09",
+    "vigencia": true,
+    "tipo_conta": 3
+  }
+},
+{
+  "model": "ibs.contabasecalculopiscofins",
+  "pk": 29,
+  "fields": {
+    "conta": "31112038",
+    "descricao": "REST.COM.RESS LCL",
+    "data_cadastro": "2025-09-09",
+    "vigencia": true,
+    "tipo_conta": 3
+  }
+},
+{
+  "model": "ibs.contabasecalculopiscofins",
+  "pk": 30,
+  "fields": {
+    "conta": "31112069",
+    "descricao": "COMIS ESCALONADA RES",
+    "data_cadastro": "2025-09-09",
+    "vigencia": true,
+    "tipo_conta": 3
+  }
+},
+{
+  "model": "ibs.contabasecalculopiscofins",
+  "pk": 31,
+  "fields": {
+    "conta": "31112079",
+    "descricao": "REC. COMIS Sompo RE",
+    "data_cadastro": "2025-09-09",
+    "vigencia": true,
+    "tipo_conta": 3
+  }
+},
+{
+  "model": "ibs.contabasecalculopiscofins",
+  "pk": 32,
+  "fields": {
+    "conta": "31112003",
+    "descricao": "PR.RESSEG CEDID ADMT",
+    "data_cadastro": "2025-09-09",
+    "vigencia": true,
+    "tipo_conta": 3
+  }
+},
+{
+  "model": "ibs.contabasecalculopiscofins",
+  "pk": 33,
+  "fields": {
+    "conta": "31112042",
+    "descricao": "PMD EMIT RESS ADMT",
+    "data_cadastro": "2025-09-09",
+    "vigencia": true,
+    "tipo_conta": 3
+  }
+},
+{
+  "model": "ibs.contabasecalculopiscofins",
+  "pk": 34,
+  "fields": {
+    "conta": "31112045",
+    "descricao": "P.R.EMIT RESS ADMT",
+    "data_cadastro": "2025-09-09",
+    "vigencia": true,
+    "tipo_conta": 3
+  }
+},
+{
+  "model": "ibs.contabasecalculopiscofins",
+  "pk": 35,
+  "fields": {
+    "conta": "31112048",
+    "descricao": "AJUSTE PR.EM RES ADM",
+    "data_cadastro": "2025-09-09",
+    "vigencia": true,
+    "tipo_conta": 3
+  }
+},
+{
+  "model": "ibs.contabasecalculopiscofins",
+  "pk": 36,
+  "fields": {
+    "conta": "31112012",
+    "descricao": "COMIS S/ PR RES ADMT",
+    "data_cadastro": "2025-09-09",
+    "vigencia": true,
+    "tipo_conta": 3
+  }
+},
+{
+  "model": "ibs.contabasecalculopiscofins",
+  "pk": 37,
+  "fields": {
+    "conta": "31112039",
+    "descricao": "REST.COM.RESS ADMT",
+    "data_cadastro": "2025-09-09",
+    "vigencia": true,
+    "tipo_conta": 3
+  }
+},
+{
+  "model": "ibs.contabasecalculopiscofins",
+  "pk": 38,
+  "fields": {
+    "conta": "31112004",
+    "descricao": "PR.RESSEG CEDID EVNT",
+    "data_cadastro": "2025-09-09",
+    "vigencia": true,
+    "tipo_conta": 3
+  }
+},
+{
+  "model": "ibs.contabasecalculopiscofins",
+  "pk": 39,
+  "fields": {
+    "conta": "31112043",
+    "descricao": "PMD EMIT RESS EVNT",
+    "data_cadastro": "2025-09-09",
+    "vigencia": true,
+    "tipo_conta": 3
+  }
+},
+{
+  "model": "ibs.contabasecalculopiscofins",
+  "pk": 40,
+  "fields": {
+    "conta": "31112046",
+    "descricao": "P.R.EMIT RESS EVNT",
+    "data_cadastro": "2025-09-09",
+    "vigencia": true,
+    "tipo_conta": 3
+  }
+},
+{
+  "model": "ibs.contabasecalculopiscofins",
+  "pk": 41,
+  "fields": {
+    "conta": "31112049",
+    "descricao": "AJUSTE PR.EM RES EVT",
+    "data_cadastro": "2025-09-09",
+    "vigencia": true,
+    "tipo_conta": 3
+  }
+},
+{
+  "model": "ibs.contabasecalculopiscofins",
+  "pk": 42,
+  "fields": {
+    "conta": "31112050",
+    "descricao": "Pr mio Cedido - SJNT",
+    "data_cadastro": "2025-09-09",
+    "vigencia": true,
+    "tipo_conta": 3
+  }
+},
+{
+  "model": "ibs.contabasecalculopiscofins",
+  "pk": 43,
+  "fields": {
+    "conta": "31112062",
+    "descricao": "PR MIO EM.RES END.EV",
+    "data_cadastro": "2025-09-09",
+    "vigencia": true,
+    "tipo_conta": 3
+  }
+},
+{
+  "model": "ibs.contabasecalculopiscofins",
+  "pk": 44,
+  "fields": {
+    "conta": "31112072",
+    "descricao": "PR EM RES END IRV EV",
+    "data_cadastro": "2025-09-09",
+    "vigencia": true,
+    "tipo_conta": 3
+  }
+},
+{
+  "model": "ibs.contabasecalculopiscofins",
+  "pk": 45,
+  "fields": {
+    "conta": "31112013",
+    "descricao": "COMIS S/ PR RES EVNT",
+    "data_cadastro": "2025-09-09",
+    "vigencia": true,
+    "tipo_conta": 3
+  }
+},
+{
+  "model": "ibs.contabasecalculopiscofins",
+  "pk": 46,
+  "fields": {
+    "conta": "31112040",
+    "descricao": "REST.COM.RESS EVNT",
+    "data_cadastro": "2025-09-09",
+    "vigencia": true,
+    "tipo_conta": 3
+  }
+},
+{
+  "model": "ibs.contabasecalculopiscofins",
+  "pk": 47,
+  "fields": {
+    "conta": "31112051",
+    "descricao": "COM PR RES EV-SJNK",
+    "data_cadastro": "2025-09-09",
+    "vigencia": true,
+    "tipo_conta": 3
+  }
+},
+{
+  "model": "ibs.contabasecalculopiscofins",
+  "pk": 48,
+  "fields": {
+    "conta": "31112065",
+    "descricao": "COMIS. EM.RES END.EV",
+    "data_cadastro": "2025-09-09",
+    "vigencia": true,
+    "tipo_conta": 3
+  }
+},
+{
+  "model": "ibs.contabasecalculopiscofins",
+  "pk": 49,
+  "fields": {
+    "conta": "31112075",
+    "descricao": "COM S/PR RES END.IRV",
+    "data_cadastro": "2025-09-09",
+    "vigencia": true,
+    "tipo_conta": 3
+  }
+},
+{
+  "model": "ibs.contabasecalculopiscofins",
+  "pk": 50,
+  "fields": {
+    "conta": "31112005",
+    "descricao": "PR.RESS.COS.AC LCL",
+    "data_cadastro": "2025-09-09",
+    "vigencia": true,
+    "tipo_conta": 3
+  }
+},
+{
+  "model": "ibs.contabasecalculopiscofins",
+  "pk": 51,
+  "fields": {
+    "conta": "31112014",
+    "descricao": "COMIS CO-RESS LCL",
+    "data_cadastro": "2025-09-09",
+    "vigencia": true,
+    "tipo_conta": 3
+  }
+},
+{
+  "model": "ibs.contabasecalculopiscofins",
+  "pk": 52,
+  "fields": {
+    "conta": "31112032",
+    "descricao": "PR.REST. COS AC LCL",
+    "data_cadastro": "2025-09-09",
+    "vigencia": true,
+    "tipo_conta": 3
+  }
+},
+{
+  "model": "ibs.contabasecalculopiscofins",
+  "pk": 53,
+  "fields": {
+    "conta": "31112006",
+    "descricao": "PR.RESS.COS.AC ADMT",
+    "data_cadastro": "2025-09-09",
+    "vigencia": true,
+    "tipo_conta": 3
+  }
+},
+{
+  "model": "ibs.contabasecalculopiscofins",
+  "pk": 54,
+  "fields": {
+    "conta": "31112015",
+    "descricao": "COMIS CO-RESS ADMT",
+    "data_cadastro": "2025-09-09",
+    "vigencia": true,
+    "tipo_conta": 3
+  }
+},
+{
+  "model": "ibs.contabasecalculopiscofins",
+  "pk": 55,
+  "fields": {
+    "conta": "31112007",
+    "descricao": "PR.RESS.COS.AC EVNT",
+    "data_cadastro": "2025-09-09",
+    "vigencia": true,
+    "tipo_conta": 3
+  }
+},
+{
+  "model": "ibs.contabasecalculopiscofins",
+  "pk": 56,
+  "fields": {
+    "conta": "31112016",
+    "descricao": "COMIS CO-RESS EVNT",
+    "data_cadastro": "2025-09-09",
+    "vigencia": true,
+    "tipo_conta": 3
+  }
+},
+{
+  "model": "ibs.contabasecalculopiscofins",
+  "pk": 57,
+  "fields": {
+    "conta": "31112022",
+    "descricao": "CANCEL.RESS CED LCL",
+    "data_cadastro": "2025-09-09",
+    "vigencia": true,
+    "tipo_conta": 3
+  }
+},
+{
+  "model": "ibs.contabasecalculopiscofins",
+  "pk": 58,
+  "fields": {
+    "conta": "31112025",
+    "descricao": "CANC.CO-RESS CD LCL",
+    "data_cadastro": "2025-09-09",
+    "vigencia": true,
+    "tipo_conta": 3
+  }
+},
+{
+  "model": "ibs.contabasecalculopiscofins",
+  "pk": 59,
+  "fields": {
+    "conta": "31112035",
+    "descricao": "CANCEL.COM.RESS LCL",
+    "data_cadastro": "2025-09-09",
+    "vigencia": true,
+    "tipo_conta": 3
+  }
+},
+{
+  "model": "ibs.contabasecalculopiscofins",
+  "pk": 60,
+  "fields": {
+    "conta": "31112023",
+    "descricao": "CANCEL.RESS CED ADMT",
+    "data_cadastro": "2025-09-09",
+    "vigencia": true,
+    "tipo_conta": 3
+  }
+},
+{
+  "model": "ibs.contabasecalculopiscofins",
+  "pk": 61,
+  "fields": {
+    "conta": "31112036",
+    "descricao": "CANCEL.COM.RESS ADMT",
+    "data_cadastro": "2025-09-09",
+    "vigencia": true,
+    "tipo_conta": 3
+  }
+},
+{
+  "model": "ibs.contabasecalculopiscofins",
+  "pk": 62,
+  "fields": {
+    "conta": "31112024",
+    "descricao": "CANCEL.RESS CED EVNT",
+    "data_cadastro": "2025-09-09",
+    "vigencia": true,
+    "tipo_conta": 3
+  }
+},
+{
+  "model": "ibs.contabasecalculopiscofins",
+  "pk": 63,
+  "fields": {
+    "conta": "31112027",
+    "descricao": "CANC.CO-RESS CD EVNT",
+    "data_cadastro": "2025-09-09",
+    "vigencia": true,
+    "tipo_conta": 3
+  }
+},
+{
+  "model": "ibs.contabasecalculopiscofins",
+  "pk": 64,
+  "fields": {
+    "conta": "31112037",
+    "descricao": "CANCEL.COM.RESS EVNT",
+    "data_cadastro": "2025-09-09",
+    "vigencia": true,
+    "tipo_conta": 3
+  }
+},
+{
+  "model": "ibs.contabasecalculopiscofins",
+  "pk": 65,
+  "fields": {
+    "conta": "31112029",
+    "descricao": "PR.REST. RESS LCL",
+    "data_cadastro": "2025-09-09",
+    "vigencia": true,
+    "tipo_conta": 3
+  }
+},
+{
+  "model": "ibs.contabasecalculopiscofins",
+  "pk": 66,
+  "fields": {
+    "conta": "31112030",
+    "descricao": "PR.REST. RESS ADMT",
+    "data_cadastro": "2025-09-09",
+    "vigencia": true,
+    "tipo_conta": 3
+  }
+},
+{
+  "model": "ibs.contabasecalculopiscofins",
+  "pk": 67,
+  "fields": {
+    "conta": "31112031",
+    "descricao": "PR.REST. RESS EVNT",
+    "data_cadastro": "2025-09-09",
+    "vigencia": true,
+    "tipo_conta": 3
+  }
+},
+{
+  "model": "ibs.contabasecalculopiscofins",
+  "pk": 68,
+  "fields": {
+    "conta": "31112008",
+    "descricao": "PR.RVNE RESSEG LCL",
+    "data_cadastro": "2025-09-09",
+    "vigencia": true,
+    "tipo_conta": 3
+  }
+},
+{
+  "model": "ibs.contabasecalculopiscofins",
+  "pk": 69,
+  "fields": {
+    "conta": "31112009",
+    "descricao": "PR.RVNE RESSEG ADMT",
+    "data_cadastro": "2025-09-09",
+    "vigencia": true,
+    "tipo_conta": 3
+  }
+},
+{
+  "model": "ibs.contabasecalculopiscofins",
+  "pk": 70,
+  "fields": {
+    "conta": "31112010",
+    "descricao": "PR.RVNE RESSEG EVNT",
+    "data_cadastro": "2025-09-09",
+    "vigencia": true,
+    "tipo_conta": 3
+  }
+},
+{
+  "model": "ibs.contabasecalculopiscofins",
+  "pk": 71,
+  "fields": {
+    "conta": "31291001",
+    "descricao": "PPNG RESSEG DIR LCL",
+    "data_cadastro": "2025-09-09",
+    "vigencia": true,
+    "tipo_conta": 3
+  }
+},
+{
+  "model": "ibs.contabasecalculopiscofins",
+  "pk": 72,
+  "fields": {
+    "conta": "31291002",
+    "descricao": "PPNG RESSEG RVNE LCL",
+    "data_cadastro": "2025-09-09",
+    "vigencia": true,
+    "tipo_conta": 3
+  }
+},
+{
+  "model": "ibs.contabasecalculopiscofins",
+  "pk": 73,
+  "fields": {
+    "conta": "31291007",
+    "descricao": "PPNG RESSEG N PR LCL",
+    "data_cadastro": "2025-09-09",
+    "vigencia": true,
+    "tipo_conta": 3
+  }
+},
+{
+  "model": "ibs.contabasecalculopiscofins",
+  "pk": 74,
+  "fields": {
+    "conta": "31291021",
+    "descricao": "PPNG RESSEG DIR ADMT",
+    "data_cadastro": "2025-09-09",
+    "vigencia": true,
+    "tipo_conta": 3
+  }
+},
+{
+  "model": "ibs.contabasecalculopiscofins",
+  "pk": 75,
+  "fields": {
+    "conta": "31291022",
+    "descricao": "PPNG RESSEG RVNE AD",
+    "data_cadastro": "2025-09-09",
+    "vigencia": true,
+    "tipo_conta": 3
+  }
+},
+{
+  "model": "ibs.contabasecalculopiscofins",
+  "pk": 76,
+  "fields": {
+    "conta": "31291027",
+    "descricao": "PPNG RESSEG N P ADMT",
+    "data_cadastro": "2025-09-09",
+    "vigencia": true,
+    "tipo_conta": 3
+  }
+},
+{
+  "model": "ibs.contabasecalculopiscofins",
+  "pk": 77,
+  "fields": {
+    "conta": "31291041",
+    "descricao": "PPNG RESSEG DIR EVNT",
+    "data_cadastro": "2025-09-09",
+    "vigencia": true,
+    "tipo_conta": 3
+  }
+},
+{
+  "model": "ibs.contabasecalculopiscofins",
+  "pk": 78,
+  "fields": {
+    "conta": "31291042",
+    "descricao": "PPNG RESSEG RVNE EV",
+    "data_cadastro": "2025-09-09",
+    "vigencia": true,
+    "tipo_conta": 3
+  }
+},
+{
+  "model": "ibs.contabasecalculopiscofins",
+  "pk": 79,
+  "fields": {
+    "conta": "31291047",
+    "descricao": "PPNG RESSEG N P EVNT",
+    "data_cadastro": "2025-09-09",
+    "vigencia": true,
+    "tipo_conta": 3
+  }
+},
+{
+  "model": "ibs.contabasecalculopiscofins",
+  "pk": 80,
+  "fields": {
+    "conta": "31291048",
+    "descricao": "PPNG RESSEG DIR END",
+    "data_cadastro": "2025-09-09",
+    "vigencia": true,
+    "tipo_conta": 3
+  }
+},
+{
+  "model": "ibs.contabasecalculopiscofins",
+  "pk": 81,
+  "fields": {
+    "conta": "31291069",
+    "descricao": "PPNG RESSEG END IRV",
+    "data_cadastro": "2025-09-09",
+    "vigencia": true,
+    "tipo_conta": 3
+  }
+},
+{
+  "model": "ibs.contabasecalculopiscofins",
+  "pk": 82,
+  "fields": {
+    "conta": "31291071",
+    "descricao": "PPNG Prop Sompo RE",
+    "data_cadastro": "2025-09-09",
+    "vigencia": true,
+    "tipo_conta": 3
+  }
+},
+{
+  "model": "ibs.contabasecalculopiscofins",
+  "pk": 83,
+  "fields": {
+    "conta": "31291073",
+    "descricao": "PPNG   Prop Sompo RE",
+    "data_cadastro": "2025-09-09",
+    "vigencia": true,
+    "tipo_conta": 3
+  }
+},
+{
+  "model": "ibs.contabasecalculopiscofins",
+  "pk": 84,
+  "fields": {
+    "conta": "31291005",
+    "descricao": "COMIS. DIF RESS LCL",
+    "data_cadastro": "2025-09-09",
+    "vigencia": true,
+    "tipo_conta": 3
+  }
+},
+{
+  "model": "ibs.contabasecalculopiscofins",
+  "pk": 85,
+  "fields": {
+    "conta": "31291025",
+    "descricao": "COMIS. DIF RESS ADMT",
+    "data_cadastro": "2025-09-09",
+    "vigencia": true,
+    "tipo_conta": 3
+  }
+},
+{
+  "model": "ibs.contabasecalculopiscofins",
+  "pk": 86,
+  "fields": {
+    "conta": "31291045",
+    "descricao": "COMIS. DIF RESS EVNT",
+    "data_cadastro": "2025-09-09",
+    "vigencia": true,
+    "tipo_conta": 3
+  }
+},
+{
+  "model": "ibs.contabasecalculopiscofins",
+  "pk": 87,
+  "fields": {
+    "conta": "31291049",
+    "descricao": "COMIS. DIF RESS END",
+    "data_cadastro": "2025-09-09",
+    "vigencia": true,
+    "tipo_conta": 3
+  }
+},
+{
+  "model": "ibs.contabasecalculopiscofins",
+  "pk": 88,
+  "fields": {
+    "conta": "31291070",
+    "descricao": "DCD RESSEG END IRV",
+    "data_cadastro": "2025-09-09",
+    "vigencia": true,
+    "tipo_conta": 3
+  }
+},
+{
+  "model": "ibs.contabasecalculopiscofins",
+  "pk": 89,
+  "fields": {
+    "conta": "31291072",
+    "descricao": "COM.RES.DIF Sompo RE",
+    "data_cadastro": "2025-09-09",
+    "vigencia": true,
+    "tipo_conta": 3
+  }
+},
+{
+  "model": "ibs.contabasecalculopiscofins",
+  "pk": 90,
+  "fields": {
+    "conta": "36111001",
+    "descricao": "JR CDB VC (DPV) GAIN",
+    "data_cadastro": "2025-09-09",
+    "vigencia": true,
+    "tipo_conta": 3
+  }
+},
+{
+  "model": "ibs.contabasecalculopiscofins",
+  "pk": 91,
+  "fields": {
+    "conta": "36112001",
+    "descricao": "JJR LFT VC (DPV)GAI",
+    "data_cadastro": "2025-09-09",
+    "vigencia": true,
+    "tipo_conta": 3
+  }
+},
+{
+  "model": "ibs.contabasecalculopiscofins",
+  "pk": 92,
+  "fields": {
+    "conta": "36112003",
+    "descricao": "JR LTN VC (DPV) GAIN",
+    "data_cadastro": "2025-09-09",
+    "vigencia": true,
+    "tipo_conta": 3
+  }
+},
+{
+  "model": "ibs.contabasecalculopiscofins",
+  "pk": 93,
+  "fields": {
+    "conta": "36112005",
+    "descricao": "JR NTN VC (DPV) GAIN",
+    "data_cadastro": "2025-09-09",
+    "vigencia": true,
+    "tipo_conta": 3
+  }
+},
+{
+  "model": "ibs.contabasecalculopiscofins",
+  "pk": 94,
+  "fields": {
+    "conta": "36112007",
+    "descricao": "JR NTNF VC (DPV)GAIN",
+    "data_cadastro": "2025-09-09",
+    "vigencia": true,
+    "tipo_conta": 3
+  }
+},
+{
+  "model": "ibs.contabasecalculopiscofins",
+  "pk": 95,
+  "fields": {
+    "conta": "36311008",
+    "descricao": "OCIL.CAMBIAL BANCO",
+    "data_cadastro": "2025-09-09",
+    "vigencia": true,
+    "tipo_conta": 3
+  }
+},
+{
+  "model": "ibs.contabasecalculopiscofins",
+  "pk": 96,
+  "fields": {
+    "conta": "36311001",
+    "descricao": "JURO DIF PR EMISS PR",
+    "data_cadastro": "2025-09-09",
+    "vigencia": true,
+    "tipo_conta": 3
+  }
+},
+{
+  "model": "ibs.contabasecalculopiscofins",
+  "pk": 97,
+  "fields": {
+    "conta": "36313001",
+    "descricao": "JURO DIF PR CEDIDO",
+    "data_cadastro": "2025-09-09",
+    "vigencia": true,
+    "tipo_conta": 3
+  }
+},
+{
+  "model": "ibs.contabasecalculopiscofins",
+  "pk": 98,
+  "fields": {
+    "conta": "36114001",
+    "descricao": "FDO  EX VC (DPV)GAIN",
+    "data_cadastro": "2025-09-09",
+    "vigencia": true,
+    "tipo_conta": 3
+  }
+},
+{
+  "model": "ibs.contabasecalculopiscofins",
+  "pk": 99,
+  "fields": {
+    "conta": "36114002",
+    "descricao": "FDO EX (DPV) GAIN",
+    "data_cadastro": "2025-09-09",
+    "vigencia": true,
+    "tipo_conta": 3
+  }
+},
+{
+  "model": "ibs.contabasecalculopiscofins",
+  "pk": 100,
+  "fields": {
+    "conta": "36990002",
+    "descricao": "JUROS REC PR.ATRASO",
+    "data_cadastro": "2025-09-09",
+    "vigencia": true,
+    "tipo_conta": 3
+  }
+},
+{
+  "model": "ibs.contabasecalculopiscofins",
+  "pk": 101,
+  "fields": {
+    "conta": "36990003",
+    "descricao": "RECEIT OSCIL.CAMBIAL",
+    "data_cadastro": "2025-09-09",
+    "vigencia": true,
+    "tipo_conta": 3
+  }
+},
+{
+  "model": "ibs.contabasecalculopiscofins",
+  "pk": 102,
+  "fields": {
+    "conta": "36990004",
+    "descricao": "JR REC REPARC",
+    "data_cadastro": "2025-09-09",
+    "vigencia": true,
+    "tipo_conta": 3
+  }
+},
+{
+  "model": "ibs.contabasecalculopiscofins",
+  "pk": 104,
+  "fields": {
+    "conta": "36113002",
+    "descricao": "DIVID.RECEB.SOC.ABER",
+    "data_cadastro": "2025-09-09",
+    "vigencia": true,
+    "tipo_conta": 3
+  }
+},
+{
+  "model": "ibs.contabasecalculopiscofins",
+  "pk": 105,
+  "fields": {
+    "conta": "36113005",
+    "descricao": "Ganhos Dia Merc Fut",
+    "data_cadastro": "2025-09-09",
+    "vigencia": true,
+    "tipo_conta": 3
+  }
+},
+{
+  "model": "ibs.contabasecalculopiscofins",
+  "pk": 106,
+  "fields": {
+    "conta": "45990004",
+    "descricao": "DESP.OSCIL.CAMBIAL",
+    "data_cadastro": "2025-09-09",
+    "vigencia": true,
+    "tipo_conta": 1
+  }
+},
+{
+  "model": "ibs.contabasecalculopiscofins",
+  "pk": 107,
+  "fields": {
+    "conta": "36311005",
+    "descricao": "OCIL.CAMBIAL PREMREC",
+    "data_cadastro": "2025-09-09",
+    "vigencia": true,
+    "tipo_conta": 1
+  }
+},
+{
+  "model": "ibs.contabasecalculopiscofins",
+  "pk": 108,
+  "fields": {
+    "conta": "36311004",
+    "descricao": "OCIL.CAMBIAL COS AC",
+    "data_cadastro": "2025-09-09",
+    "vigencia": true,
+    "tipo_conta": 1
+  }
+},
+{
+  "model": "ibs.contabasecalculopiscofins",
+  "pk": 109,
+  "fields": {
+    "conta": "36990001",
+    "descricao": "JUROS S/RECEB.EVENT",
+    "data_cadastro": "2025-09-09",
+    "vigencia": true,
+    "tipo_conta": 1
+  }
+},
+{
+  "model": "ibs.contabasecalculopiscofins",
+  "pk": 110,
+  "fields": {
+    "conta": "36112014",
+    "descricao": "Res Realiz. NTNB  VC",
+    "data_cadastro": "2025-09-09",
+    "vigencia": true,
+    "tipo_conta": 1
+  }
+},
+{
+  "model": "ibs.contabasecalculopiscofins",
+  "pk": 111,
+  "fields": {
+    "conta": "36312002",
+    "descricao": "REC.OCIL.CAM RES CD",
+    "data_cadastro": "2025-09-09",
+    "vigencia": true,
+    "tipo_conta": 1
+  }
+},
+{
+  "model": "ibs.contabasecalculopiscofins",
+  "pk": 112,
+  "fields": {
+    "conta": "36311003",
+    "descricao": "OCIL.CAMBIAL EMI PR",
+    "data_cadastro": "2025-09-09",
+    "vigencia": true,
+    "tipo_conta": 1
+  }
+},
+{
+  "model": "ibs.contabasecalculopiscofins",
+  "pk": 113,
+  "fields": {
+    "conta": "36990099",
+    "descricao": "OUTRAS REC.FINAN EV",
+    "data_cadastro": "2025-09-09",
+    "vigencia": true,
+    "tipo_conta": 1
+  }
+},
+{
+  "model": "ibs.contabasecalculopiscofins",
+  "pk": 114,
+  "fields": {
+    "conta": "31291064",
+    "descricao": "EXC T CN COM ESCAL",
+    "data_cadastro": "2025-09-09",
+    "vigencia": true,
+    "tipo_conta": 3
+  }
+},
+{
+  "model": "ibs.contabasecalculopiscofins",
+  "pk": 115,
+  "fields": {
+    "conta": "36990098",
+    "descricao": "OUTRAS R.FIN.EV TRIB",
+    "data_cadastro": "2025-10-06",
+    "vigencia": true,
+    "tipo_conta": 1
+  }
+}
+]

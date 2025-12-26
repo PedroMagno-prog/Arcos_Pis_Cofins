@@ -221,6 +221,7 @@ def calcular_valor_cbs(resumos):
 
     return resumos, total_cbs
 
+# -- Projeto Sompo começa aqui  --
 
 def load_contas_do_balancete(myfile):
     balancetes = []
@@ -631,9 +632,7 @@ def agrupamento_somatorio_por_ramo_pis_cofins(contas, lista_ramos):
         nome_ramo = ''
         for conta in contas:
             if ramo == conta.grupo_ramo:
-                print(ramo)
                 soma = soma + conta.movimento
-                print(soma)
                 nome_ramo = conta.grupo_ramo
                 pass
         ramoAgrupado.receita = soma
@@ -732,6 +731,24 @@ def agrupamento_somatorio_por_ramo_pis_cofins_relatorios(movimentos, lista_ramos
     return movimentos_agrupados_por_ramo
     pass
 
+
+# Função para calcular a soma dos contas do balancete pelo tipo de conta informado pela
+# Efetuar o somatorio das contas do mesmo numero e verificar o tipo de conta
+# base de calculo informado no PIS / COFINS. (CREDORA, DEVEDORA, AMBOS)
+def verificar_tipo_conta_pis_cofins_apr(tipo_conta, contas):
+    somatorio = sum(conta.movimento for conta in contas)
+    print('Somatorio da conta, ', somatorio, 'Tipo conta, ', tipo_conta)
+
+    if tipo_conta == 1:      # CREDORA → válido quando <= 0
+        return somatorio <= 0
+
+    if tipo_conta == 2:      # DEVEDORA → válido quando >= 0
+        return somatorio >= 0
+
+    if tipo_conta == 3:      # NEUTRA
+        return True
+
+    return False
 
 def ramos_unicos(movimentos):
     ramos = []

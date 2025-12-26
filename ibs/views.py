@@ -1001,7 +1001,8 @@ def calcular_pis_cofins_aberto_ramo(request, ano, mes):
 
             contas_finais = []
             # Pegar todos os ramos do balancete
-            lista_ramos = []
+            # Set para não duplicar os elementos da lista
+            lista_ramos = set()
 
             if balancete:
                 balancete = Balancete.objects.filter(ano=balancete.ano, mes=balancete.mes).latest('versao')
@@ -1010,11 +1011,14 @@ def calcular_pis_cofins_aberto_ramo(request, ano, mes):
                     contas_balancetes = ContaBalancete.objects.filter(conta_do_razao=base_calculo.conta,
                                                                       balancete_id=balancete.codigo).all()
                     # Nessa lista com listas com as contas selecionadas no balancete.
-                    for conta_b in contas_balancetes:
-                        lista_ramos.append(conta_b.grupo_ramo)
-                        contas_finais.append(conta_b)
+                    print('Base de calculo da conta selecinada', base_calculo.conta)
+                    if verificar_tipo_conta_pis_cofins_apr(base_calculo.tipo_conta, contas_balancetes):
+                        contas_finais.extend(contas_balancetes)
+                        lista_ramos.update(conta.grupo_ramo for conta in contas_balancetes)
+                        print('----' * 30)
 
                 contas = []
+                print(contas_finais)
 
                 for conta_base in base_calculo_pis_cofins:
                     conta_apc = ContaApuracaoPisCofinsAPR()
@@ -1068,7 +1072,6 @@ def calcular_pis_cofins_aberto_ramo(request, ano, mes):
                     #apc.ramos = calcular_remocao_dos_ramos_indefinidos(ramos)
 
                     apc.ramos = ramos
-                    print('RAMOS AQUI DENTRO')
                     for ramo in apc.ramos:
                         print(ramo)
 
