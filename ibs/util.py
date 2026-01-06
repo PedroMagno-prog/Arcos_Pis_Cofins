@@ -3,6 +3,7 @@ import csv
 import locale
 import io
 import hashlib
+from django.db.models import Sum, FloatField
 
 def criptografar_senha(senha: str) -> str:
     """
@@ -14,9 +15,10 @@ def criptografar_senha(senha: str) -> str:
 
 def locale_br(valor):
     locale.setlocale(locale.LC_ALL, 'pt_BR.UTF-8')
-    #locale.setlocale(locale.LC_ALL, 'pt_BR')
+    # locale.setlocale(locale.LC_ALL, 'pt_BR')
     locale.currency(543921.94, symbol=True, grouping=True)
     return locale.currency(valor, symbol=True, grouping=True)
+
 
 def limpar_string_moeda(valor):
     """
@@ -58,6 +60,7 @@ def limpar_string_moeda(valor):
     # e a parte decimal separada por vírgula.
     return f"{sinal}{parte_inteira_com_pontos},{parte_decimal_str}"
 
+
 def calcular_aliquota_ibs(codigo_servico=float):
     if codigo_servico == 1001:
         return 26.5
@@ -69,7 +72,8 @@ def calcular_aliquota_ibs(codigo_servico=float):
         return 26.5
     pass
 
-def convert_valor(valor) :
+
+def convert_valor(valor):
     # --- Início da Alteração ---
     # 1. Verificamos se o valor, sem espaços, é um hífen.
     if valor.strip() == '-':
@@ -85,6 +89,7 @@ def convert_valor(valor) :
 
     return valor
     pass
+
 
 def load_receitas(myfile):
     receitas = []
@@ -108,6 +113,7 @@ def load_receitas(myfile):
 
     pass
 
+
 def load_despesas(myfile):
     despesas = []
     file = myfile.read().decode('utf-8')
@@ -128,6 +134,7 @@ def load_despesas(myfile):
             despesa.optante_simples = row[15]
             despesas.append(despesa)
     return despesas
+
 
 def calcular_somatorio_receitas(receitas):
     municipios = ('SAO PAULO', 'RIO DE JANEIRO', 'LONDRINA', 'OSASCO')
@@ -152,6 +159,7 @@ def calcular_somatorio_receitas(receitas):
     return resumos, total_resumos
     pass
 
+
 def calcular_somatorio_despesas(despesas):
     valor = 0
     for despesa in despesas:
@@ -165,6 +173,7 @@ def calcular_percentual_media_receita_despesas(total_receitas, total_despesas):
     return perc
     pass
 
+
 def calcular_credito_por_municipio(resumos, perc):
     total_credito = 0
     for resumo in resumos:
@@ -172,6 +181,7 @@ def calcular_credito_por_municipio(resumos, perc):
         total_credito += resumo.credito_municipio
 
     return resumos, total_credito
+
 
 def calcular_base_calculo_(resumos):
     total_base_calculo = 0
@@ -181,15 +191,15 @@ def calcular_base_calculo_(resumos):
 
     return resumos, total_base_calculo
 
+
 def calcular_valor_iva(resumos):
     aliquota = 26.5
     total_iva = 0
     for resumo in resumos:
         resumo.iva = resumo.base_calculo * (aliquota / 100)
-        total_iva +=resumo.iva
+        total_iva += resumo.iva
 
     return resumos, total_iva
-
 
 
 def calcular_valor_ibs(resumos):
@@ -211,6 +221,7 @@ def calcular_valor_cbs(resumos):
 
     return resumos, total_cbs
 
+# -- Projeto Sompo começa aqui  --
 
 def load_contas_do_balancete(myfile):
     balancetes = []
@@ -218,21 +229,22 @@ def load_contas_do_balancete(myfile):
     reader = csv.reader(io.StringIO(file), delimiter=';')
     next(reader, None)
     for row in reader:
-            print(row)
-            conta = ContaBalancete()
-            conta.conta_do_razao = row[0]
-            conta.periodo = row[1]
-            conta.grupo_ramo = row[2]
-            conta.nome_conta = row[3]
-            conta.saldo_anterior = row[4]
-            conta.debitos = row[5]
-            conta.creditos = row[6]
-            conta.movimento = row[7]
-            conta.saldo_acumulado = row[8]
-            balancetes.append(conta)
-            pass
+        print(row)
+        conta = ContaBalancete()
+        conta.conta_do_razao = row[0]
+        conta.periodo = row[1]
+        conta.grupo_ramo = row[2]
+        conta.nome_conta = row[3]
+        conta.saldo_anterior = row[4]
+        conta.debitos = row[5]
+        conta.creditos = row[6]
+        conta.movimento = row[7]
+        conta.saldo_acumulado = row[8]
+        balancetes.append(conta)
+        pass
     return balancetes
     pass
+
 
 def load_movimentos_relatorio_sinpag(myfile):
     movimentos = []
@@ -240,25 +252,26 @@ def load_movimentos_relatorio_sinpag(myfile):
     reader = csv.reader(io.StringIO(file), delimiter=';')
     next(reader, None)
     for row in reader:
-            movimento = MovimentacaoSINPAG()
-            movimento.cod_cia = row[1]
-            movimento.dt_base = row[2]
-            movimento.cod_ramo = row[4]
-            movimento.num_sin = row[5]
-            movimento.num_apol = row[6]
-            movimento.cpf_ben = row[10]
-            movimento.vr_cos_ced = convert_valor(row[15])
-            movimento.vr_mov = convert_valor(row[16])
-            movimento.tp_sin = int(row[18])
-            movimentos.append(movimento)
+        movimento = MovimentacaoSINPAG()
+        movimento.cod_cia = row[1]
+        movimento.dt_base = row[2]
+        movimento.cod_ramo = row[4]
+        movimento.num_sin = row[5]
+        movimento.num_apol = row[6]
+        movimento.cpf_ben = row[10]
+        movimento.vr_cos_ced = convert_valor(row[15])
+        movimento.vr_mov = convert_valor(row[16])
+        movimento.tp_sin = int(row[18])
+        movimentos.append(movimento)
 
-            pass
+        pass
     return movimentos
     pass
 
+
 def calculos_sinpag(movimentos):
-    soma_vr_mov =0
-    soma_vr_cos_ced =0
+    soma_vr_mov = 0
+    soma_vr_cos_ced = 0
     dif_soma_vr_mod_cos_ced = 0
 
     for movimento in movimentos:
@@ -273,27 +286,27 @@ def calculos_sinpag(movimentos):
     pass
 
 
-
-
 def load_movimentos_relatorio_sinpagac(myfile):
     movimentos = []
     file = myfile.read().decode('utf-8')
     reader = csv.reader(io.StringIO(file), delimiter=';')
     next(reader, None)
     for row in reader:
-            movimento = MovimentacaoSINPAGAC()
-            movimento.cod_cia = row[1]
-            movimento.dt_base = row[2]
-            movimento.cod_coss = row[5]
-            movimento.num_sin = row[6]
-            movimento.num_apol= row[7]
-            movimento.vr_mov = convert_valor(row[12])
-            movimento.tp_sin = int(row[13])
-            movimento.g_cpf_bnf = row[17]
-            movimentos.append(movimento)
-            pass
+        movimento = MovimentacaoSINPAGAC()
+        movimento.cod_cia = row[1]
+        movimento.dt_base = row[2]
+        movimento.cod_ramo = row[4]
+        movimento.cod_coss = row[5]
+        movimento.num_sin = row[6]
+        movimento.num_apol = row[7]
+        movimento.vr_mov = convert_valor(row[12])
+        movimento.tp_sin = int(row[13])
+        movimento.g_cpf_bnf = row[17]
+        movimentos.append(movimento)
+        pass
     return movimentos
     pass
+
 
 def calculos_sinpagac(movimentos):
     soma_vr_mov = 0
@@ -305,23 +318,26 @@ def calculos_sinpagac(movimentos):
     pass
 
 
+# OLD Não usar esse -> Usar o Salvados e vendidos Novos
+# Remover quando possivel.
 def load_movimentos_relatorio_salvados_vendidos(myfile):
     movimentos = []
     file = myfile.read().decode('utf-8')
     reader = csv.reader(io.StringIO(file), delimiter=';')
     next(reader, None)
     for row in reader:
-            movimento = MovimentacaoSalvadosVendidos()
-            movimento.cod_cia = row[0]
-            movimento.cod_ctabal = row[1]
-            movimento.cod_classe = row[2]
-            movimento.receita_baixa = convert_valor(row[5])
-            movimento.bx_dep_prej = row[6]
-            movimento.bx_val_cont_ganho = row[7]
-            movimentos.append(movimento)
-            pass
+        movimento = MovimentacaoSalvadosVendidos()
+        movimento.cod_cia = row[0]
+        movimento.cod_ctabal = row[1]
+        movimento.cod_classe = row[2]
+        movimento.receita_baixa = convert_valor(row[5])
+        movimento.bx_dep_prej = row[6]
+        movimento.bx_val_cont_ganho = row[7]
+        movimentos.append(movimento)
+        pass
     return movimentos
     pass
+
 
 def load_movimentos_relatorio_salvados_vendidos_novos(myfile):
     movimentos = []
@@ -330,17 +346,17 @@ def load_movimentos_relatorio_salvados_vendidos_novos(myfile):
     next(reader, None)
 
     for row in reader:
-            movimento = MovimentacaoSalvadosVendidosNovos()
-            movimento.cod_cia = row[1]
-            movimento.dt_base = row[2]
-            movimento.tipo_mov = row[3]
-            movimento.cod_ramo = row[4]
-            movimento.num_sin = row[5]
-            movimento.cpf_ben = row[10]
-            movimento.vr_mov = convert_valor(row[16])
-            movimento.tp_sin = row[18]
-            movimentos.append(movimento)
-            pass
+        movimento = MovimentacaoSalvadosVendidosNovos()
+        movimento.cod_cia = row[1]
+        movimento.dt_base = row[2]
+        movimento.tipo_mov = row[3]
+        movimento.cod_ramo = row[4]
+        movimento.num_sin = row[5]
+        movimento.cpf_ben = row[10]
+        movimento.vr_mov = convert_valor(row[16])
+        movimento.tp_sin = row[18]
+        movimentos.append(movimento)
+        pass
     return movimentos
     pass
 
@@ -355,6 +371,7 @@ def calculos_salvados_vendidos_novos(movimentos):
             soma_vr_mov = soma_vr_mov + float(movimento.vr_mov)
     return soma_vr_mov
 
+
 def calculos_salvados_vendidos(movimentos):
     soma_receita_baixa_positiva = 0
 
@@ -366,24 +383,24 @@ def calculos_salvados_vendidos(movimentos):
     pass
 
 
-
 def load_movimentos_relatorio_recuperados_novo(myfile):
     movimentos = []
     file = myfile.read().decode('utf-8')
     reader = csv.reader(io.StringIO(file), delimiter=';')
     next(reader, None)
     for row in reader:
-            movimento = MovimentacaoRecuperadosNovo()
-            movimento.tipo_sin = row[1]
-            movimento.num_sin = row[2]
-            movimento.cod_ramo = row[4]
-            movimento.baixa_ind = convert_valor(row[23])
-            movimento.baixa_salv = convert_valor(row[26])
-            movimento.baixa_res = convert_valor(row[27])
-            print(movimento)
-            movimentos.append(movimento)
+        movimento = MovimentacaoRecuperadosNovo()
+        movimento.tipo_sin = row[1]
+        movimento.num_sin = row[2]
+        movimento.cod_ramo = row[4]
+        movimento.cod_ramo_susep = row[42]
+        movimento.baixa_ind = convert_valor(row[23])
+        movimento.baixa_salv = convert_valor(row[26])
+        movimento.baixa_res = convert_valor(row[27])
+        print(movimento)
+        movimentos.append(movimento)
 
-            pass
+        pass
     return movimentos
     pass
 
@@ -394,20 +411,21 @@ def load_movimentos_relatorio_recuperados(myfile):
     reader = csv.reader(io.StringIO(file), delimiter=';')
     next(reader, None)
     for row in reader:
-            movimento = MovimentacaoRecuperados()
-            movimento.cod_cia = row[0]
-            movimento.num_sin = row[2]
-            movimento.dt_base = ''
-            movimento.cod_ramo = row[4]
-            movimento.descricao = row[7]
-            movimento.cod_prod = row[10]
-            movimento.mes_ind =convert_valor(row[17])
-            print(row[17])
-            movimento.baixa_total = row[28]
-            movimentos.append(movimento)
-            pass
+        movimento = MovimentacaoRecuperados()
+        movimento.cod_cia = row[0]
+        movimento.num_sin = row[2]
+        movimento.dt_base = ''
+        movimento.cod_ramo = row[4]
+        movimento.descricao = row[7]
+        movimento.cod_prod = row[10]
+        movimento.mes_ind = convert_valor(row[17])
+        print(row[17])
+        movimento.baixa_total = row[28]
+        movimentos.append(movimento)
+        pass
     return movimentos
     pass
+
 
 def calculos_recuperados_novos(movimentos):
     dif_soma_baixa_ind_res_salv = 0
@@ -416,9 +434,9 @@ def calculos_recuperados_novos(movimentos):
     soma_baixa_salv = 0
     for movimento in movimentos:
         if movimento.tipo_sin == '1':
-             soma_baixa_ind = soma_baixa_ind + float(movimento.baixa_ind)
-             soma_baixa_res = soma_baixa_res + float(movimento.baixa_res)
-             soma_baixa_salv = soma_baixa_salv + float(movimento.baixa_salv)
+            soma_baixa_ind = soma_baixa_ind + float(movimento.baixa_ind)
+            soma_baixa_res = soma_baixa_res + float(movimento.baixa_res)
+            soma_baixa_salv = soma_baixa_salv + float(movimento.baixa_salv)
 
     print('Soma Baixa Ind', soma_baixa_ind)
     print('Soma Baixa Res', soma_baixa_res)
@@ -427,11 +445,13 @@ def calculos_recuperados_novos(movimentos):
     print('Soma vr mov', dif_soma_baixa_ind_res_salv)
     return dif_soma_baixa_ind_res_salv, soma_baixa_ind, soma_baixa_res, soma_baixa_salv
 
+
 def calculos_recuperados(movimentos):
     soma_mes_ind = 0
     for movimento in movimentos:
         soma_mes_ind = soma_mes_ind + float(movimento.mes_ind)
     return soma_mes_ind
+
 
 def calcular_soma_receitas(contas):
     soma = 0
@@ -469,10 +489,10 @@ def convert_mes_texto(mes):
     return None
     pass
 
+
 # Função para calcular a soma dos contas do balancete pelo tipo de conta informado pela
 # base de calculo informado no PIS / COFINS.
 def verificar_tipo_conta(tipo_conta, soma):
-
     if tipo_conta == 1:
         # CREDORA
         if soma <= 0:
@@ -495,12 +515,13 @@ def verificar_tipo_conta(tipo_conta, soma):
 # base de calculo informado no PIS / COFINS.
 def soma_contas_balancete(tipo_conta, contas_balancetes):
     soma = 0
-    for conta in contas_balancetes: # varre o balancete procurando pelas contas de mesmo ID (conta-base)
+    for conta in contas_balancetes:  # varre o balancete procurando pelas contas de mesmo ID (conta-base)
         soma += conta.movimento
 
     soma = verificar_tipo_conta(tipo_conta, soma)
     return soma
     pass
+
 
 def agrupamento_somatorio_por_ramo(contas, lista_ramos):
     ramos = []
@@ -521,6 +542,7 @@ def agrupamento_somatorio_por_ramo(contas, lista_ramos):
     return ramos
     pass
 
+
 def aplicar_alicota_pis_cofins_psl(ramos):
     for ramo in ramos:
         ramo.pis_psl = ramo.base_calculo * 0.0065
@@ -530,6 +552,7 @@ def aplicar_alicota_pis_cofins_psl(ramos):
     return ramos
     pass
 
+
 def somatorio_saldo_ramos(ramos):
     somatorio = 0
     for r in ramos:
@@ -537,6 +560,7 @@ def somatorio_saldo_ramos(ramos):
 
     return somatorio
     pass
+
 
 def calcular_percentual_relativo_por_ramo(ramos, somatorio):
     percentuais = []
@@ -546,6 +570,7 @@ def calcular_percentual_relativo_por_ramo(ramos, somatorio):
         percentuais.append(tupla)
     return percentuais
     pass
+
 
 def calcular_remocao_dos_ramos_indefinidos(ramos):
     ramos_indefinido = []
@@ -569,6 +594,7 @@ def calcular_valor_diluicao_por_ramo_indefinido(ramo_indefinido, percentuais):
     return valor_diluido_por_ramo
     pass
 
+
 # Calculo do valor da base do ramo com diluição dos ramos indefinidos
 def calcular_valor_base_ramo(ramos, valor_diluido):
     for ramo in ramos:
@@ -576,6 +602,7 @@ def calcular_valor_base_ramo(ramos, valor_diluido):
             if ramo.ramo == valor[0]:
                 ramo.base_calculo = ramo.base_calculo + valor[2]
     pass
+
 
 def calcular_totais_apuracao_psl(apuracaoPSL, ramos):
     total_base_calculo = 0
@@ -593,5 +620,427 @@ def calcular_totais_apuracao_psl(apuracaoPSL, ramos):
     apuracaoPSL.total_cofins_psl = total_cofins_psl
     apuracaoPSL.total_soma_pis_cofins = total_soma_pis_cofins
 
+    pass
 
+
+# Calculo PIS COFINS ABERTO POR Ramo
+def agrupamento_somatorio_por_ramo_pis_cofins(contas, lista_ramos):
+    ramos = []
+    for ramo in lista_ramos:
+        ramoAgrupado = RamoAgrupadoPisCofinsAPR()
+        soma = 0
+        nome_ramo = ''
+        for conta in contas:
+            if ramo == conta.grupo_ramo:
+                soma = soma + conta.movimento
+                nome_ramo = conta.grupo_ramo
+                pass
+        ramoAgrupado.receita = soma
+        ramoAgrupado.ramo = nome_ramo
+        ramos.append(ramoAgrupado)
+    return ramos
+    pass
+
+
+def calcular_remocao_dos_ramos_indefinidos_pis_cofins(ramos):
+    ramos_indefinido = []
+    for i, ramo in enumerate(ramos):
+        if ramo.ramo == '#' or ramo.ramo == '99.99':
+            elemento = ramos.pop(i)
+            ramos_indefinido.append(elemento)
+        pass
+
+    return ramos_indefinido
+    pass
+
+
+def calcular_percentual_relativo_por_ramo_pis_cofins(ramos, somatorio):
+    percentuais = []
+    for r in ramos:
+        calculo = r.receita / somatorio
+        tupla = (r.ramo, abs(calculo))
+        percentuais.append(tupla)
+    return percentuais
+    pass
+
+
+def somatorio_saldo_ramos_pis_cofins(ramos):
+    somatorio = 0
+    for r in ramos:
+        somatorio = somatorio + r.receita
+
+    return somatorio
+
+
+def calcular_valor_diluicao_por_ramo_indefinido_pis_cofins(ramo_indefinido, percentuais):
+    valor_diluido_por_ramo = []
+    for percentual in percentuais:
+        calculo = percentual[1] * ramo_indefinido.receita
+        tupla = (percentual[0], percentual[1], calculo)
+        valor_diluido_por_ramo.append(tupla)
+        pass
+    return valor_diluido_por_ramo
+    pass
+
+
+# Calculo do valor da base do ramo com diluição dos ramos indefinidos
+def calcular_valor_base_ramo_pis_cofins(ramos, valor_diluido):
+    for ramo in ramos:
+        for valor in valor_diluido:
+            if ramo.ramo == valor[0]:
+                ramo.receita = ramo.receita + valor[2]
+    pass
+
+
+def comparar_ramos_balancete_relatorios(valor):
+    return int(str(valor).replace(".", ""))
+
+
+def limpar_lista(lista, remover):
+    return [x for x in lista if x not in remover]
+
+
+# Calculo do Agrupamento de ramos por Relatorio Sinpag (Somente o somatorio)
+# Usando a lista de ramos do balancete
+def agrupamento_somatorio_por_ramo_pis_cofins_relatorios(movimentos, lista_ramos):
+    movimentos_agrupados_por_ramo = []
+    for ramo in lista_ramos:
+        ramo_agrupado_sinpag = RamoAgrupadoPisCofinsRelatorioSinpag()
+        soma_vr_mov = 0
+        soma_vr_cos_ced = 0
+        nome_ramo = ''
+        tp_sin = None
+        for movimento in movimentos:
+            # print('Comparando ramos agrupados do relatorio sinpag')
+            if str(comparar_ramos_balancete_relatorios(ramo)) == str(movimento.cod_ramo):
+                if movimento.tp_sin == 1 or movimento.tp_sin == 3:
+                    soma_vr_mov = soma_vr_mov + movimento.vr_mov
+                    soma_vr_cos_ced = soma_vr_cos_ced + movimento.vr_cos_ced
+                    nome_ramo = movimento.cod_ramo
+                    tp_sin = movimento.tp_sin
+                    # print('Ramo encontrado : ', nome_ramo)
+                    pass
+        if nome_ramo:
+            ramo_agrupado_sinpag.soma_vr_mov = soma_vr_mov
+            ramo_agrupado_sinpag.ramo = nome_ramo
+            ramo_agrupado_sinpag.soma_vr_cos_ced = soma_vr_cos_ced
+            ramo_agrupado_sinpag.dif_soma_vr_mod_cos_ced = soma_vr_mov - soma_vr_cos_ced
+
+            ramo_agrupado_sinpag.tp_sin = tp_sin
+            movimentos_agrupados_por_ramo.append(ramo_agrupado_sinpag)
+    return movimentos_agrupados_por_ramo
+    pass
+
+
+# Função para calcular a soma dos contas do balancete pelo tipo de conta informado pela
+# Efetuar o somatorio das contas do mesmo numero e verificar o tipo de conta
+# base de calculo informado no PIS / COFINS. (CREDORA, DEVEDORA, AMBOS)
+def verificar_tipo_conta_pis_cofins_apr(tipo_conta, contas):
+    somatorio = sum(conta.movimento for conta in contas)
+    print('Somatorio da conta, ', somatorio, 'Tipo conta, ', tipo_conta)
+
+    if tipo_conta == 1:      # CREDORA → válido quando <= 0
+        return somatorio <= 0
+
+    if tipo_conta == 2:      # DEVEDORA → válido quando >= 0
+        return somatorio >= 0
+
+    if tipo_conta == 3:      # NEUTRA
+        return True
+
+    return False
+
+def ramos_unicos(movimentos):
+    ramos = []
+    for movimento in movimentos:
+        if isinstance(movimento, MovimentacaoRecuperadosNovo):
+            ramos.append(movimento.cod_ramo_susep)
+        else:
+            ramos.append(movimento.cod_ramo)
+
+    unicos = list(set(ramos))
+    print('Ramos : ', len(unicos))
+    return unicos
+    pass
+
+
+# Somatorio do relatorio sinpag por ramo
+def agrupamento_somatorio_por_ramo_pis_cofins_relatorios_sinpag(movimentos):
+    movimentos_agrupados_por_ramo = []
+    ramos = ramos_unicos(movimentos)
+    for ramo in ramos:
+        ramo_agrupado_sinpag = RamoAgrupadoPisCofinsRelatorioSinpag()
+        soma_vr_mov = 0
+        soma_vr_cos_ced = 0
+        nome_ramo = ''
+        tp_sin = None
+        for movimento in movimentos:
+            if str(ramo) == str(movimento.cod_ramo):
+                if movimento.tp_sin == 1 or movimento.tp_sin == 3:
+                    soma_vr_mov = soma_vr_mov + movimento.vr_mov
+                    soma_vr_cos_ced = soma_vr_cos_ced + movimento.vr_cos_ced
+                    nome_ramo = movimento.cod_ramo
+                    tp_sin = movimento.tp_sin
+        if nome_ramo:
+            ramo_agrupado_sinpag.soma_vr_mov = soma_vr_mov
+            ramo_agrupado_sinpag.ramo = nome_ramo
+            ramo_agrupado_sinpag.soma_vr_cos_ced = soma_vr_cos_ced
+            ramo_agrupado_sinpag.dif_soma_vr_mod_cos_ced = soma_vr_mov - soma_vr_cos_ced
+            ramo_agrupado_sinpag.tp_sin = tp_sin
+            movimentos_agrupados_por_ramo.append(ramo_agrupado_sinpag)
+    return movimentos_agrupados_por_ramo
+    pass
+
+
+# Somatorio do relatorio sinpag por ramo
+def agrupamento_somatorio_por_ramo_pis_cofins_relatorios_sinpagac(movimentos):
+    movimentos_agrupados_por_ramo = []
+    ramos = ramos_unicos(movimentos)
+    for ramo in ramos:
+        ramo_agrupado_sinpagac = RamoAgrupadoPisCofinsRelatorioSinpagac()
+        soma_vr_mov = 0
+        nome_ramo = ''
+        tp_sin = None
+        for movimento in movimentos:
+            if str(ramo) == str(movimento.cod_ramo):
+                if movimento.tp_sin == 1:
+                    soma_vr_mov = soma_vr_mov + movimento.vr_mov
+                    nome_ramo = movimento.cod_ramo
+                    tp_sin = movimento.tp_sin
+        if nome_ramo:
+            ramo_agrupado_sinpagac.soma_vr_mov = soma_vr_mov
+            ramo_agrupado_sinpagac.ramo = nome_ramo
+            ramo_agrupado_sinpagac.tp_sin = tp_sin
+            movimentos_agrupados_por_ramo.append(ramo_agrupado_sinpagac)
+    return movimentos_agrupados_por_ramo
+    pass
+
+def soma_movimento_conta_psl(conta_base, balancete):
+    """
+    Calcula o movimento total de UMA conta-base de forma eficiente,
+    usando aggregate() do Django.
+    """
+    # Filtra os movimentos e já pede a soma total (Sum)
+
+    resultado = ContaBalancete.objects.filter(
+        conta_do_razao=conta_base.conta,  # Link da ContaBase para ContaDoRazao
+        balancete_id=balancete.codigo  # Link para o balancete
+    ).aggregate(
+        # 'total_movimento' é um nome que criei para o resultado
+        total_movimento=Sum('saldo_acumulado', output_field=FloatField())
+    )
+
+    total = resultado.get('total_movimento')
+
+    # Retorna o total, ou 0.0 se não houver movimentos
+    return total if total is not None else 0.0
+
+# Somatorio do relatorio sinpag por ramo
+def agrupamento_somatorio_por_ramo_pis_cofins_relatorios_salvados_vendidos(movimentos):
+    movimentos_agrupados_por_ramo = []
+    ramos = ramos_unicos(movimentos)
+    for ramo in ramos:
+        ramo_agrupado_salvados_vendidos = RamoAgrupadoPisCofinsRelatorioSalvadosVendidos()
+        soma_vr_mov = 0
+        nome_ramo = ''
+        tipo_mov = None
+        for movimento in movimentos:
+            if str(ramo) == str(movimento.cod_ramo):
+                if movimento.tipo_mov == '209' or movimento.tipo_mov == '210':
+                    soma_vr_mov = soma_vr_mov + movimento.vr_mov
+                    nome_ramo = movimento.cod_ramo
+                    tipo_mov = movimento.tipo_mov
+        if nome_ramo:
+            ramo_agrupado_salvados_vendidos.soma_vr_mov = soma_vr_mov
+            ramo_agrupado_salvados_vendidos.ramo = nome_ramo
+            ramo_agrupado_salvados_vendidos.tipo_mov = tipo_mov
+            movimentos_agrupados_por_ramo.append(ramo_agrupado_salvados_vendidos)
+    return movimentos_agrupados_por_ramo
+    pass
+
+
+# Somatorio do relatorio sinpag por ramo
+def agrupamento_somatorio_por_ramo_pis_cofins_relatorios_recuperados(movimentos):
+    movimentos_agrupados_por_ramo = []
+    ramos = ramos_unicos(movimentos)
+    for ramo in ramos:
+        ramo_agrupado_salvados_vendidos = RamoAgrupadoPisCofinsRelatorioRecuperados()
+        tipo_sin = None
+        nome_ramo = ''
+        soma_baixa_ind = 0
+        soma_baixa_res = 0
+        soma_baixa_salv = 0
+        for movimento in movimentos:
+            if str(ramo) == str(movimento.cod_ramo_susep):
+                if movimento.tipo_sin == '1':
+                    soma_baixa_ind = soma_baixa_ind + movimento.baixa_ind
+                    soma_baixa_res = soma_baixa_res + movimento.baixa_res
+                    soma_baixa_salv = soma_baixa_salv + movimento.baixa_salv
+                    nome_ramo = movimento.cod_ramo_susep
+                    tipo_sin = movimento.tipo_sin
+        if nome_ramo:
+            ramo_agrupado_salvados_vendidos.soma_baixa_ind = soma_baixa_ind
+            ramo_agrupado_salvados_vendidos.soma_baixa_ind = soma_baixa_res
+            ramo_agrupado_salvados_vendidos.soma_baixa_ind = soma_baixa_salv
+            ramo_agrupado_salvados_vendidos.ramo = nome_ramo
+            if tipo_sin is None:
+                tipo_sin = '0'
+            ramo_agrupado_salvados_vendidos.tipo_mov = tipo_sin
+            ramo_agrupado_salvados_vendidos.dif_soma_baixa_ind_res_salv = soma_baixa_ind \
+                                                                          + soma_baixa_res + soma_baixa_salv
+
+            movimentos_agrupados_por_ramo.append(ramo_agrupado_salvados_vendidos)
+    return movimentos_agrupados_por_ramo
+    pass
+
+
+def calcular_base_de_calculo_ramo_agrupado_piscofins_apr(ramos, movimentos_agrupados):
+    print('Calcular apucação pis cofins apr.')
+    ramos_novos = ramos[:]
+    for i, ramo in enumerate(ramos):
+        for movimento in movimentos_agrupados:
+            if isinstance(movimento, RamoAgrupadoPisCofinsRelatorioSinpag):
+                if str(comparar_ramos_balancete_relatorios(ramo.ramo)) == movimento.ramo:
+                    print('Ramo encontrado no sinpag ', movimento.ramo)
+                    if ramo.base_calculo == 0:
+                        ramo.base_calculo = ramo.receita + movimento.dif_soma_vr_mod_cos_ced
+                    else:
+                        ramo.base_calculo = ramo.base_calculo + movimento.dif_soma_vr_mod_cos_ced
+
+                    if ramo.ramo in ramos_novos:
+                        ramos[i] = ramo
+
+            if isinstance(movimento, RamoAgrupadoPisCofinsRelatorioSinpagac):
+                if str(comparar_ramos_balancete_relatorios(ramo.ramo)) == movimento.ramo:
+                    print('Ramo encontrado no sinpagac ', movimento.ramo)
+                    if ramo.base_calculo == 0:
+                        ramo.base_calculo = ramo.receita + movimento.soma_vr_mov
+                    else:
+                        ramo.base_calculo = ramo.base_calculo + movimento.soma_vr_mov
+
+                    if ramo.ramo in ramos_novos:
+                        ramos[i] = ramo
+
+            if isinstance(movimento, RamoAgrupadoPisCofinsRelatorioSalvadosVendidos):
+                if str(comparar_ramos_balancete_relatorios(ramo.ramo)) == movimento.ramo:
+                    print('Ramo encontrado no Salv/Vend ', movimento.ramo)
+                    if ramo.base_calculo == 0:
+                        ramo.base_calculo = ramo.receita + movimento.soma_vr_mov
+                    else:
+                        ramo.base_calculo = ramo.base_calculo + movimento.soma_vr_mov
+
+                    if ramo.ramo in ramos_novos:
+                        ramos[i] = ramo
+
+            if isinstance(movimento, RamoAgrupadoPisCofinsRelatorioRecuperados):
+                if str(comparar_ramos_balancete_relatorios(ramo.ramo)) == movimento.ramo:
+                    print('Ramo encontrado no Recuperados ', movimento.ramo)
+                    if ramo.base_calculo == 0:
+                        ramo.base_calculo = ramo.receita + movimento.dif_soma_baixa_ind_res_salv
+                    else:
+                        ramo.base_calculo = ramo.base_calculo + movimento.dif_soma_baixa_ind_res_salv
+                    if ramo.ramo in ramos_novos:
+                        ramos[i] = ramo
+
+    return ramos_novos
+    pass
+
+def calcular_pis_apr(ramo):
+    ramo.pis_apr = ramo.base_calculo * 0.0065
+    pass
+
+def calcular_cofins_apr(ramo):
+    ramo.cofins_apr = ramo.base_calculo * 0.04
+    pass
+
+def calcular_base_positiva_final_apr(ramo):
+    if ramo.base_calculo:
+        ramo.base_calculo = ramo.base_calculo * -1
+    else:
+        if ramo.receita == 0:
+            ramo.base_calculo = ramo.receita
+        else:
+            ramo.base_calculo = ramo.receita * -1
+    pass
+
+
+
+def calcular_apuracao_pis_cofins_apr(apc):
+    print('Calcular apucação pis cofins apr.')
+    ramos = apc.ramos[:]
+    for i, ramo in enumerate(ramos):
+        for movimento in apc.movimentos_sinpag:
+            if isinstance(movimento, RamoAgrupadoPisCofinsRelatorioSinpag):
+                if str(comparar_ramos_balancete_relatorios(ramo.ramo)) == movimento.ramo:
+                    if ramo.base_calculo is None:
+                        ramo.base_calculo = ramo.receita + movimento.dif_soma_vr_mod_cos_ced
+                    else:
+                        ramo.base_calculo = ramo.base_calculo + movimento.dif_soma_vr_mod_cos_ced
+
+        for movimento in apc.movimentos_sinpagac:
+            if isinstance(movimento, RamoAgrupadoPisCofinsRelatorioSinpagac):
+                if str(comparar_ramos_balancete_relatorios(ramo.ramo)) == movimento.ramo:
+                    if ramo.base_calculo is None:
+                        ramo.base_calculo = ramo.receita + movimento.soma_vr_mov
+
+                    else:
+                        ramo.base_calculo = ramo.base_calculo + movimento.soma_vr_mov
+
+        for movimento in apc.movimentos_salvados_vendidos:
+            if isinstance(movimento, RamoAgrupadoPisCofinsRelatorioSalvadosVendidos):
+                if str(comparar_ramos_balancete_relatorios(ramo.ramo)) == movimento.ramo:
+                    if ramo.base_calculo is None:
+                        ramo.base_calculo = ramo.receita - movimento.soma_vr_mov
+                    else:
+                        ramo.base_calculo = ramo.base_calculo - movimento.soma_vr_mov
+
+        for movimento in apc.movimentos_recuperados:
+            if isinstance(movimento, RamoAgrupadoPisCofinsRelatorioRecuperados):
+                if str(comparar_ramos_balancete_relatorios(ramo.ramo)) == movimento.ramo:
+                    if ramo.base_calculo is None:
+                        ramo.base_calculo = ramo.receita - movimento.dif_soma_baixa_ind_res_salv
+                    else:
+                        ramo.base_calculo = ramo.base_calculo - movimento.dif_soma_baixa_ind_res_salv
+
+    for ramo in apc.ramos:
+        calcular_base_positiva_final_apr(ramo)
+        calcular_cofins_apr(ramo)
+        calcular_pis_apr(ramo)
+
+    return apc.ramos
+    pass
+
+def convert_valores_para_visualizacao_apuracao_pis_cofins_apr(apc):
+    apc.mes = convert_mes_texto(apc.mes)
+    for ramo in apc.ramos:
+        ramo.receita = locale_br(ramo.receita)
+        ramo.base_calculo = locale_br(ramo.base_calculo)
+        ramo.pis_apr = locale_br(ramo.pis_apr)
+        ramo.cofins_apr = locale_br(ramo.cofins_apr)
+
+    for movimento in apc.movimentos_sinpag:
+        movimento.soma_vr_mov = locale_br(movimento.soma_vr_mov)
+        movimento.soma_vr_cos_ced = locale_br(movimento.soma_vr_cos_ced)
+        movimento.dif_soma_vr_mod_cos_ced = locale_br(movimento.dif_soma_vr_mod_cos_ced)
+
+    for movimento in apc.movimentos_sinpagac:
+        movimento.soma_vr_mov = locale_br(movimento.soma_vr_mov)
+
+    for movimento in apc.movimentos_salvados_vendidos:
+        movimento.soma_vr_mov = locale_br(movimento.soma_vr_mov)
+
+
+    for movimento in apc.movimentos_recuperados:
+        movimento.soma_baixa_ind = locale_br(movimento.soma_baixa_ind)
+        movimento.soma_baixa_res = locale_br(movimento.soma_baixa_res)
+        movimento.soma_baixa_salv = locale_br(movimento.soma_baixa_salv)
+        movimento.dif_soma_baixa_ind_res_salv = locale_br(movimento.dif_soma_baixa_ind_res_salv)
+
+    pass
+
+def convert_valores_somente_ramo_para_visualizacao_pis_cofins_apr(ramo):
+    ramo.receita = locale_br(ramo.receita)
+    ramo.base_calculo = locale_br(ramo.base_calculo)
+    ramo.pis_apr = locale_br(ramo.pis_apr)
+    ramo.cofins_apr = locale_br(ramo.cofins_apr)
     pass
