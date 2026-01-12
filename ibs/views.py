@@ -1522,11 +1522,11 @@ def carregar_dados_pis_cofins_aberto_ramo(request):
 
             if ano is None or len(ano) <= 0:
                 msg = 'Informe o ano do balancete.'
-                return render(request, CADASTRO_PSL_PAGE, {'msg': msg})
+                return render(request, CADASTRO_PIS_COFINS_ABERTO_RAMO_PAGE, {'msg': msg})
 
             elif mes is None or len(mes) <= 0:
                 msg = 'Informe o mês do balancete.'
-                return render(request, CADASTRO_PSL_PAGE, {'msg': msg})
+                return render(request, CADASTRO_PIS_COFINS_ABERTO_RAMO_PAGE, {'msg': msg})
 
                 # Salvando o ano e mês na sessão
                 request.session['ano_selecionado'] = ano
@@ -1660,6 +1660,95 @@ def exportar_csv_pis_cofins(request, ano, mes):
     """
     response = HttpResponse(content_type='text/csv; charset=utf-8')
     response['Content-Disposition'] = f'attachment; filename="Apuracao_Pis_Cofins_{convert_mes_texto(mes)}{ano}.csv"'
+
+    writer = csv.writer(response, delimiter=';')
+
+    # --- Bloco de Dados (Relatórios e Balancete) ---
+    try:
+        # Buscamos todos os dados de uma vez para sermos mais eficientes
+        dados_csv = montar_dados_tela_pis_cofins(ano, mes, None)
+
+        # --- Parte 1: Detalhamento do Balancete ---
+        balancete = dados_csv.get('balancete')
+
+        if balancete and hasattr(balancete, 'contas'):
+            contas_do_balancete = balancete.contas
+
+            if contas_do_balancete:
+                fieldnames_contas = ['Conta do Razao', 'Descricao', 'Movimento']
+                writer.writerow(fieldnames_contas)
+
+                for conta in contas_do_balancete:
+                    movimento_limpo = limpar_string_moeda(conta.movimento)
+                    writer.writerow([
+                        conta.conta_do_razao,
+                        conta.periodo,
+                        movimento_limpo
+                    ])
+                writer.writerow(['', 'Base de Calculo:', limpar_string_moeda(dados_csv.get('base_calculo'))])
+            else:
+                writer.writerow(['Balancete encontrado, mas sem contas para exibir.'])
+        else:
+            writer.writerow(['Nenhum dado do balancete encontrado para este período.'])
+
+        writer.writerow([])
+
+        # --- Parte 2: Relatórios Consolidados ---
+        fieldnames_relatorios = ['Tipo', 'Mes/Ano', 'Valor']
+        writer.writerow(fieldnames_relatorios)
+        # Relatório SINPAG
+        relatorio_sinpag = dados_csv.get('relatorio_sinpag')
+        writer.writerow(['SINPAG', str(mes) + '/' + str(ano),
+                         relatorio_sinpag.dif_soma_cos_ced_vr_mov]) if relatorio_sinpag else 'SINPAG nao encontrado'
+        # Relatório SINPAGAC
+        relatorio_sinpagac = dados_csv.get('relatorio_sinpagac')
+        writer.writerow(['SINPAGAC', str(mes) + '/' + str(ano),
+                         relatorio_sinpagac.soma_vr_mov]) if relatorio_sinpagac else 'SINPAGAC nao encontrado'
+        # Relatório SALVADOS VENDIDOS
+        relatorio_salvados = dados_csv.get('relatorio_salvados_vendidos')
+        writer.writerow(['SALVADOS', str(mes) + '/' + str(ano),
+                         relatorio_salvados.soma_vr_mov]) if relatorio_salvados else 'SALVADOS nao encontrado'
+        # Relatório RECUPERADOS
+        relatorio_recuperados = dados_csv.get('relatorio_recuperados')
+        writer.writerow(['RECUPERADOS', str(mes) + '/' + str(ano), # ERRO: str(mes + '/' + ano)
+                         relatorio_recuperados.dif_soma_baixa_ind_res_salv]) if relatorio_recuperados else 'RECUPERADOS nao encontrado'
+    except Exception as e:
+        writer.writerow([])  # Separador antes do erro
+        writer.writerow([f"Erro ao buscar relatórios ou balancete: {e}"])
+
+    writer.writerow([])
+
+    # --- Parte 3: Apuração PIS/COFINS da Sessão ---
+    dados_calculo = request.session.get('ultimo_calculo_pis_cofins', {})
+
+    if dados_calculo:
+        fieldnames_calculo = ['Imposto', 'Valor Apurado', 'Retido', 'Compensado', 'a Recolher']
+        writer.writerow(fieldnames_calculo)
+
+        writer.writerow([
+            'PIS', dados_calculo.get('pis_valor_str', ''), dados_calculo.get('pis_retido_str', ''),
+            dados_calculo.get('pis_compensado_str', ''), dados_calculo.get('pis_recolher_str', '')
+        ])
+        writer.writerow([
+            'COFINS', dados_calculo.get('cofins_valor_str', ''), dados_calculo.get('cofins_retido_str', ''),
+            dados_calculo.get('cofins_compensado_str', ''), dados_calculo.get('cofins_recolher_str', '')
+        ])
+    else:
+        writer.writerow(['Nenhum cálculo recente encontrado na sessão para exportar.'])
+
+    return response
+
+
+@login_required_usuario
+def exportar_csv_psl(request, ano, mes):
+    """
+    Exporta um relatório CSV completo contendo:
+      Movimento agrupado por Ramo
+      Movimento agrupado por Conta
+    cada seção é separada por uma linha em branco.
+    """
+    response = HttpResponse(content_type='text/csv; charset=utf-8')
+    response['Content-Disposition'] = f'attachment; filename="Apuracao_PSL_{convert_mes_texto(mes)}{ano}.csv"'
 
     writer = csv.writer(response, delimiter=';')
 
