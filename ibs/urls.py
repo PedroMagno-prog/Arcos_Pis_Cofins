@@ -80,5 +80,6 @@ urlpatterns = [
     path('Cadastrar-Conta-Calculo-Base-psl/', cadastrar_base_calculo_psl,
          name='cadastrar-conta-base-psl'),
 
-    path('exportar-csv/<int:ano>/<int:mes>/', exportar_csv_pis_cofins, name='exportar_csv_pis_cofins'),
+    path('exportar-csv-pis-cofins/<int:ano>/<int:mes>/', exportar_csv_pis_cofins, name='exportar_csv_pis_cofins'),
+    path('exportar-csv-psl/<int:ano>/<int:mes>/', exportar_csv_psl, name='exportar_csv_psl'),
 ]

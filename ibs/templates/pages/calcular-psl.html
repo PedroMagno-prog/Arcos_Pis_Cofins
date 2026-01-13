@@ -136,7 +136,7 @@
 
           {% if  apsl  %}
     <div class="jumbotron">
-           <p style="font-size: 20px; font-weight: bold;"> {{apsl.mes }} de {{ apsl.ano }}</p>
+           <p style="font-size: 20px; font-weight: bold;"> {{ apsl.mes }} de {{ apsl.ano }}</p>
 
      <table width="100%" class=" table table-light table-striped table-bordered">
 
@@ -207,7 +207,9 @@
 
     </tbody>
   </table>
-
+ <a href="{% url 'ibs:exportar_csv_psl' ano=ano mes=mes%}" class="btn btn-success mr-2">
+           Exportar Apuração (CSV)
+        </a>
     </div>
 
 {% endif %}
