@@ -1,13 +1,17 @@
 {%  load static %}
-<nav class="navbar navbar-expand-md navbar-dark fixed-top bg-dark">
+<nav class="navbar navbar-expand-md navbar-dark fixed-top navbar-arcos">
   <img src="{% static 'img/onlylogo_arcosdev.png' %}" style="margin-center: -10px;" class="mr-3" width="auto" height="50" alt="Logo Arcos">
-  <!--
-  <img src="{% static 'img/logo_arcosdev.png' %}" style="margin-center: -10px;" class="mr-2" width="auto" height="60" alt="Logo Arcos">
-  -->
-    <a class="navbar-brand" href="#"> FISCAL - Apuração mensal </a>
+   <a class="navbar-brand" href="#">
+    FISCAL <span style="color: var(--brand-primary)">|</span> Apuração mensal
+  </a>
   <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault" aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="Toggle navigation">
     <span class="navbar-toggler-icon"></span>
   </button>
+
+{#<button class="navbar-toggler" type="button" data-toggle="collapse"#}
+{#          data-target="#navbarsExampleDefault">#}
+{#    <span class="navbar-toggler-icon"></span>#}
+{#  </button>#}
 
   <div class="collapse navbar-collapse" id="navbarsExampleDefault">
     <ul class="navbar-nav mr-auto">
@@ -69,12 +73,10 @@
   </div>
 
 
-    <div class="navbar-collapse collapse w-100 order-3 dual-collapse2">
-        <ul class="navbar-nav ml-auto">
-            <li class="nav-item">
-                <p><a class="btn btn-secondary" href="{% url 'ibs:logout' %}" role="button"> Sair  &raquo;</a></p>
-            </li>
-        </ul>
-    </div>
+    <div class="ml-auto">
+    <a class="btn btn-logout" href="{% url 'ibs:logout' %}">
+      Sair &raquo;
+    </a>
+  </div>
 </nav>
   </div>
