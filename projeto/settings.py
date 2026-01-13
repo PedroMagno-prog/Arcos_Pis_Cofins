@@ -91,11 +91,11 @@ DATABASES = {
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",  # modern alias
-        "NAME": "bdibs",
-        "USER": "postgres",
-        "PASSWORD": "coti",
-        "HOST": "localhost",
-        "PORT": "5432",
+        "NAME": os.getenv("RDS_DB_NAME"),
+        "USER": os.getenv("RDS_USERNAME"),
+        "PASSWORD": os.getenv("RDS_PASSWORD"),
+        "HOST": os.getenv("RDS_HOSTNAME"),
+        "PORT": os.getenv("RDS_PORT", "5432"),
     }
 }
 

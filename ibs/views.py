@@ -721,6 +721,9 @@ def cadastrar_base_calculo_pis_cofins(request):
             descricao = request.POST['descricao']
             tipo_conta = request.POST['tipo']
 
+            if conta:
+                conta = conta.strip()
+
             if not conta or not descricao:
                 msg = 'Erro, por favor preencha todos os campos.'
                 return render(request, CADASTRO_BASE_CALCULO_PIS_COFINS_PAGE, {'msg' :  msg})
@@ -751,6 +754,9 @@ def cadastrar_base_calculo_psl(request):
             conta = request.POST['conta']
             descricao = request.POST['descricao']
             tipo_conta = request.POST['tipo']
+
+            if conta:
+                conta = conta.strip()
 
             if not conta or not descricao:
                 msg = 'Erro, por favor preencha todos os campos.'
@@ -1367,7 +1373,7 @@ def calcular_psl(request):
             if balancete:
                 balancete = Balancete.objects.filter(ano=balancete.ano, mes=balancete.mes).latest('versao')
 
-                # modificação para SOMAR o movimento das contas antes de serparar por ramo
+                # modificação para SOMAR o movimento das contas antes de separar por ramo
                 contas_com_total = list(contas)
 
                 base_calculo_psl = 0
@@ -1658,8 +1664,16 @@ def exportar_csv_pis_cofins(request, ano, mes):
         Apuração de PIS/COFINS
     cada seção é separada por uma linha em branco.
     """
+    from datetime import datetime
+
+    data_hora_atual = datetime.now().strftime("%d-%m-%Y_%Hh%M")
+
+    # Monta o nome do arquivo com separadores para melhor leitura
+    # Ex: Apuracao_Pis_Cofins_Agosto_2025_12-01-2026_18h42.csv
+    nome_arquivo = f"Apuracao_Pis_Cofins_{convert_mes_texto(mes)}_{ano}_{data_hora_atual}.csv"
+
     response = HttpResponse(content_type='text/csv; charset=utf-8')
-    response['Content-Disposition'] = f'attachment; filename="Apuracao_Pis_Cofins_{convert_mes_texto(mes)}{ano}.csv"'
+    response['Content-Disposition'] = f'attachment; filename="{nome_arquivo}"'
 
     writer = csv.writer(response, delimiter=';')
 
@@ -1742,87 +1756,97 @@ def exportar_csv_pis_cofins(request, ano, mes):
 @login_required_usuario
 def exportar_csv_psl(request, ano, mes):
     """
-    Exporta um relatório CSV completo contendo:
-      Movimento agrupado por Ramo
-      Movimento agrupado por Conta
-    cada seção é separada por uma linha em branco.
+    Exporta um relatório CSV completo do PSL.
+    Corrige o erro de tipo convertendo float -> string (locale_br) -> string limpa.
+    Nome do arquivo: Apuracao_PSL_Mes_Ano_dd-mm-aaaa_HHhMM.csv
     """
+    from datetime import datetime
+
+    # Gera timestamp: Ex: 12-01-2026_18h42
+    data_hora_atual = datetime.now().strftime("%d-%m-%Y_%Hh%M")
+    nome_arquivo = f"Apuracao_PSL_{convert_mes_texto(mes)}_{ano}_{data_hora_atual}.csv"
+
     response = HttpResponse(content_type='text/csv; charset=utf-8')
-    response['Content-Disposition'] = f'attachment; filename="Apuracao_PSL_{convert_mes_texto(mes)}{ano}.csv"'
+    response['Content-Disposition'] = f'attachment; filename="{nome_arquivo}"'
 
     writer = csv.writer(response, delimiter=';')
 
-    # --- Bloco de Dados (Relatórios e Balancete) ---
     try:
-        # Buscamos todos os dados de uma vez para sermos mais eficientes
-        dados_csv = montar_dados_tela_pis_cofins(ano, mes, None)
+        # 1. Busca a apuração
+        apsl = ApuracaoPSL.objects.filter(ano=ano, mes=mes).order_by('-data_cadastro').first()
 
-        # --- Parte 1: Detalhamento do Balancete ---
-        balancete = dados_csv.get('balancete')
+        if not apsl:
+            writer.writerow(['Nenhuma apuracao encontrada para este periodo.'])
+            return response
 
-        if balancete and hasattr(balancete, 'contas'):
-            contas_do_balancete = balancete.contas
+        # 2. Busca o balancete para recalcular movimentos de contas individuais
+        balancete = Balancete.objects.filter(ano=ano, mes=mes).first()
+        if balancete:
+            balancete = Balancete.objects.filter(ano=balancete.ano, mes=balancete.mes).latest('versao')
 
-            if contas_do_balancete:
-                fieldnames_contas = ['Conta do Razao', 'Descricao', 'Movimento']
-                writer.writerow(fieldnames_contas)
+        # ==============================================================================
+        # BLOCO 1: RESUMO POR RAMO
+        # ==============================================================================
+        writer.writerow(['--- RESUMO POR RAMO E TOTAIS ---'])
+        writer.writerow(['Ramo', 'Base Calculo', 'PIS (0.65%)', 'COFINS (4%)', 'Total (PIS+COFINS)'])
 
-                for conta in contas_do_balancete:
-                    movimento_limpo = limpar_string_moeda(conta.movimento)
-                    writer.writerow([
-                        conta.conta_do_razao,
-                        conta.periodo,
-                        movimento_limpo
-                    ])
-                writer.writerow(['', 'Base de Calculo:', limpar_string_moeda(dados_csv.get('base_calculo'))])
-            else:
-                writer.writerow(['Balancete encontrado, mas sem contas para exibir.'])
-        else:
-            writer.writerow(['Nenhum dado do balancete encontrado para este período.'])
+        ramos = RamoAgrupadoPSL.objects.filter(apuracao_psl=apsl).all()
+
+        for ramo in ramos:
+            # Aplica locale_br para virar "R$ X,XX" e depois limpa para "X,XX"
+            writer.writerow([
+                ramo.ramo,
+                limpar_string_moeda(locale_br(ramo.base_calculo)),
+                limpar_string_moeda(locale_br(ramo.pis_psl)),
+                limpar_string_moeda(locale_br(ramo.cofins_psl)),
+                limpar_string_moeda(locale_br(ramo.total_soma_pis_cofins))
+            ])
 
         writer.writerow([])
-
-        # --- Parte 2: Relatórios Consolidados ---
-        fieldnames_relatorios = ['Tipo', 'Mes/Ano', 'Valor']
-        writer.writerow(fieldnames_relatorios)
-        # Relatório SINPAG
-        relatorio_sinpag = dados_csv.get('relatorio_sinpag')
-        writer.writerow(['SINPAG', str(mes) + '/' + str(ano),
-                         relatorio_sinpag.dif_soma_cos_ced_vr_mov]) if relatorio_sinpag else 'SINPAG nao encontrado'
-        # Relatório SINPAGAC
-        relatorio_sinpagac = dados_csv.get('relatorio_sinpagac')
-        writer.writerow(['SINPAGAC', str(mes) + '/' + str(ano),
-                         relatorio_sinpagac.soma_vr_mov]) if relatorio_sinpagac else 'SINPAGAC nao encontrado'
-        # Relatório SALVADOS VENDIDOS
-        relatorio_salvados = dados_csv.get('relatorio_salvados_vendidos')
-        writer.writerow(['SALVADOS', str(mes) + '/' + str(ano),
-                         relatorio_salvados.soma_vr_mov]) if relatorio_salvados else 'SALVADOS nao encontrado'
-        # Relatório RECUPERADOS
-        relatorio_recuperados = dados_csv.get('relatorio_recuperados')
-        writer.writerow(['RECUPERADOS', str(mes) + '/' + str(ano), # ERRO: str(mes + '/' + ano)
-                         relatorio_recuperados.dif_soma_baixa_ind_res_salv]) if relatorio_recuperados else 'RECUPERADOS nao encontrado'
-    except Exception as e:
-        writer.writerow([])  # Separador antes do erro
-        writer.writerow([f"Erro ao buscar relatórios ou balancete: {e}"])
-
-    writer.writerow([])
-
-    # --- Parte 3: Apuração PIS/COFINS da Sessão ---
-    dados_calculo = request.session.get('ultimo_calculo_pis_cofins', {})
-
-    if dados_calculo:
-        fieldnames_calculo = ['Imposto', 'Valor Apurado', 'Retido', 'Compensado', 'a Recolher']
-        writer.writerow(fieldnames_calculo)
-
         writer.writerow([
-            'PIS', dados_calculo.get('pis_valor_str', ''), dados_calculo.get('pis_retido_str', ''),
-            dados_calculo.get('pis_compensado_str', ''), dados_calculo.get('pis_recolher_str', '')
+            'TOTAL GERAL',
+            limpar_string_moeda(locale_br(apsl.total_base_calculo)),
+            limpar_string_moeda(locale_br(apsl.total_pis_psl)),
+            limpar_string_moeda(locale_br(apsl.total_cofins_psl)),
+            limpar_string_moeda(locale_br(apsl.total_soma_pis_cofins))
         ])
-        writer.writerow([
-            'COFINS', dados_calculo.get('cofins_valor_str', ''), dados_calculo.get('cofins_retido_str', ''),
-            dados_calculo.get('cofins_compensado_str', ''), dados_calculo.get('cofins_recolher_str', '')
-        ])
-    else:
-        writer.writerow(['Nenhum cálculo recente encontrado na sessão para exportar.'])
+
+        writer.writerow([])
+        writer.writerow([])
+
+        # ==============================================================================
+        # BLOCO 2: DETALHAMENTO POR CONTA
+        # ==============================================================================
+        writer.writerow(['--- DETALHAMENTO POR CONTA (BASES) ---'])
+        writer.writerow(['Conta', 'Descricao', 'Movimento Total'])
+
+        contas_apuracao = ContaApuracaoPSL.objects.filter(apuracao_psl=apsl).all()
+
+        if contas_apuracao:
+            for conta_obj in contas_apuracao:
+                valor_movimento = 0.0
+                if balancete:
+                    valor_movimento = soma_movimento_conta_psl(conta_obj, balancete)
+
+                writer.writerow([
+                    conta_obj.conta,
+                    conta_obj.descricao,
+                    limpar_string_moeda(locale_br(valor_movimento))
+                ])
+
+            # Totais no fim da lista de contas
+            writer.writerow([])
+            writer.writerow([
+                'Base: ' + limpar_string_moeda(locale_br(apsl.total_base_calculo)),
+                'PIS: ' + limpar_string_moeda(locale_br(apsl.total_pis_psl)),
+                'COFINS: ' + limpar_string_moeda(locale_br(apsl.total_cofins_psl))
+            ])
+        else:
+            writer.writerow(['Nenhuma conta vinculada a esta apuracao.'])
+
+    except Exception as ex:
+        writer.writerow([])
+        writer.writerow([f"Erro ao gerar relatorio: {str(ex)}"])
+        print(f"Erro export csv psl: {ex}")
 
     return response
