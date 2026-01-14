@@ -1080,6 +1080,8 @@ def calcular_pis_cofins_aberto_ramo(request, ano, mes):
                     apc.ramos = ramos
                     for ramo in apc.ramos:
                         print(ramo)
+                        print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+                        print(type(ramo))
 
                     if relatorio_sinpag:
                         apc.relatorio_sinpag = relatorio_sinpag
@@ -1848,5 +1850,188 @@ def exportar_csv_psl(request, ano, mes):
         writer.writerow([])
         writer.writerow([f"Erro ao gerar relatorio: {str(ex)}"])
         print(f"Erro export csv psl: {ex}")
+
+    return response
+
+
+@login_required_usuario
+def exportar_csv_pis_cofins_ramo(request, ano, mes):
+    """
+    Exporta um relatório CSV completo do PIS/COFINS Aberto por Ramo (APR).
+    Estrutura:
+      1. Resumo Geral por Ramo (Receita, Base, PIS, COFINS)
+      2. Relatório Sinpag (detalhado por ramo)
+      3. Relatório Sinpagac (detalhado por ramo)
+      4. Relatório Salvados e Vendidos (detalhado por ramo)
+      5. Relatório Recuperados (detalhado por ramo)
+
+    Nome do arquivo: Apuracao_Pis_Cofins_APR_Mes_Ano_dd-mm-aaaa_HHhMM.csv
+    """
+    from datetime import datetime
+
+    # Gera timestamp: Ex: 12-01-2026_18h42
+    data_hora_atual = datetime.now().strftime("%d-%m-%Y_%Hh%M")
+    nome_arquivo = f"Apuracao_Pis_Cofins_Ramo_{convert_mes_texto(mes)}_{ano}_{data_hora_atual}.csv"
+
+    response = HttpResponse(content_type='text/csv; charset=utf-8')
+    response['Content-Disposition'] = f'attachment; filename="{nome_arquivo}"'
+
+    writer = csv.writer(response, delimiter=';')
+
+    try:
+        # 1. Busca a última Apuração APR salva para o período
+        apc = ApuracaoPisCofinsAPR.objects.filter(ano=ano, mes=mes).order_by('-data_entrada').first()
+
+        if not apc:
+            writer.writerow(['Nenhuma apuracao encontrada para este periodo.'])
+            return response
+
+        # ==============================================================================
+        # BLOCO 1: RESUMO GERAL POR RAMO
+        # ==============================================================================
+        writer.writerow(['--- APURACAO PIS/COFINS ABERTO POR RAMO ---'])
+        writer.writerow(['Ramo', 'Receita', 'Base Calculo', 'PIS', 'COFINS'])
+
+        ramos_apr = RamoAgrupadoPisCofinsAPR.objects.filter(apuracao_piscofins_apr=apc).all()
+
+        total_receita = 0.0
+        total_base = 0.0
+        total_pis = 0.0
+        total_cofins = 0.0
+
+        if ramos_apr:
+            for ramo in ramos_apr:
+                total_receita += ramo.receita
+                total_base += ramo.base_calculo
+                total_pis += ramo.pis_apr
+                total_cofins += ramo.cofins_apr
+
+                writer.writerow([
+                    ramo.ramo,
+                    limpar_string_moeda(locale_br(ramo.receita)),
+                    limpar_string_moeda(locale_br(ramo.base_calculo)),
+                    limpar_string_moeda(locale_br(ramo.pis_apr)),
+                    limpar_string_moeda(locale_br(ramo.cofins_apr))
+                ])
+
+            # Totais Gerais do Resumo
+            writer.writerow([])
+            writer.writerow([
+                'TOTAIS GERAIS',
+                limpar_string_moeda(locale_br(total_receita)),
+                limpar_string_moeda(locale_br(total_base)),
+                limpar_string_moeda(locale_br(total_pis)),
+                limpar_string_moeda(locale_br(total_cofins))
+            ])
+        else:
+            writer.writerow(['Nenhum ramo encontrado para esta apuracao.'])
+
+        writer.writerow([])
+        writer.writerow([])
+
+        # ==============================================================================
+        # BLOCO 2: RELATORIO SINPAG
+        # ==============================================================================
+        movimentos_sinpag = RamoAgrupadoPisCofinsRelatorioSinpag.objects.filter(apuracao_piscofins_apr=apc).all()
+
+        if movimentos_sinpag:
+            writer.writerow(['--- RELATORIO SINPAG ---'])
+            writer.writerow(['Ramo', 'Soma_vr_mov', 'Soma_vr_cos_ced', 'Dif_soma_vr_mod_cos_ced'])
+
+            total_sinpag_dif = 0.0
+
+            for mov in movimentos_sinpag:
+                total_sinpag_dif += mov.dif_soma_vr_mod_cos_ced
+                writer.writerow([
+                    conserta_ramo(mov.ramo),
+                    limpar_string_moeda(locale_br(mov.soma_vr_mov)),
+                    limpar_string_moeda(locale_br(mov.soma_vr_cos_ced)),
+                    limpar_string_moeda(locale_br(mov.dif_soma_vr_mod_cos_ced))
+                ])
+
+            # Rodapé Sinpag
+            writer.writerow(['', '', 'TOTAL:', limpar_string_moeda(locale_br(total_sinpag_dif))])
+            writer.writerow([])
+            writer.writerow([])
+
+        # ==============================================================================
+        # BLOCO 3: RELATORIO SINPAGAC
+        # ==============================================================================
+        movimentos_sinpagac = RamoAgrupadoPisCofinsRelatorioSinpagac.objects.filter(apuracao_piscofins_apr=apc).all()
+
+        if movimentos_sinpagac:
+            writer.writerow(['--- RELATORIO SINPAGAC ---'])
+            writer.writerow(['Ramo', 'Soma_vr_mov'])
+
+            total_sinpagac_mov = 0.0
+
+            for mov in movimentos_sinpagac:
+                total_sinpagac_mov += mov.soma_vr_mov
+                writer.writerow([
+                    conserta_ramo(mov.ramo),
+                    limpar_string_moeda(locale_br(mov.soma_vr_mov))
+                ])
+
+            # Rodapé Sinpagac
+            writer.writerow(['TOTAL:', limpar_string_moeda(locale_br(total_sinpagac_mov))])
+            writer.writerow([])
+            writer.writerow([])
+
+        # ==============================================================================
+        # BLOCO 4: RELATORIO SALVADOS E VENDIDOS
+        # ==============================================================================
+        movimentos_salvados = RamoAgrupadoPisCofinsRelatorioSalvadosVendidos.objects.filter(
+            apuracao_piscofins_apr=apc).all()
+
+        if movimentos_salvados:
+            writer.writerow(['--- RELATORIO SALVADOS E VENDIDOS ---'])
+            writer.writerow(['Ramo', 'Soma_vr_mov'])
+
+            total_salvados_mov = 0.0
+
+            for mov in movimentos_salvados:
+                total_salvados_mov += mov.soma_vr_mov
+                writer.writerow([
+                    conserta_ramo(mov.ramo),
+                    limpar_string_moeda(locale_br(mov.soma_vr_mov))
+                ])
+
+            # Rodapé Salvados
+            writer.writerow(['TOTAL:', limpar_string_moeda(locale_br(total_salvados_mov))])
+            writer.writerow([])
+            writer.writerow([])
+
+        # ==============================================================================
+        # BLOCO 5: RELATORIO RECUPERADOS
+        # ==============================================================================
+        movimentos_recuperados = RamoAgrupadoPisCofinsRelatorioRecuperados.objects.filter(
+            apuracao_piscofins_apr=apc).all()
+
+        if movimentos_recuperados:
+            writer.writerow(['--- RELATORIO RECUPERADOS ---'])
+            writer.writerow(
+                ['Ramo', 'Soma_baixa_ind', 'Soma_baixa_res', 'Soma_baixa_salv', 'Dif_soma_baixa_ind_res_salv'])
+
+            total_recuperados_dif = 0.0
+
+            for mov in movimentos_recuperados:
+                total_recuperados_dif += mov.dif_soma_baixa_ind_res_salv
+                writer.writerow([
+                    conserta_ramo(mov.ramo),
+                    limpar_string_moeda(locale_br(mov.soma_baixa_ind)),
+                    limpar_string_moeda(locale_br(mov.soma_baixa_res)),
+                    limpar_string_moeda(locale_br(mov.soma_baixa_salv)),
+                    limpar_string_moeda(locale_br(mov.dif_soma_baixa_ind_res_salv))
+                ])
+
+            # Rodapé Recuperados
+            writer.writerow(['', '', '', 'TOTAL:', limpar_string_moeda(locale_br(total_recuperados_dif))])
+            writer.writerow([])
+            writer.writerow([])
+
+    except Exception as ex:
+        writer.writerow([])
+        writer.writerow([f"Erro ao gerar relatorio: {str(ex)}"])
+        print(f"Erro export csv: {ex}")
 
     return response

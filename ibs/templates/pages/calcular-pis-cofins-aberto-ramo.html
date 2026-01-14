@@ -285,6 +285,13 @@
 
      </table>
 
+         <div class="row mt-3 mb-5">
+    <div class="col-md-12 text-right">
+            <a href="{% url 'ibs:exportar_csv_pis_cofins_ramo' ano=ano mes=mes %}" class="btn btn-success">
+                <i class="fas fa-file-csv"></i> Exportar CSV
+            </a>
+    </div>
+</div>
       {% endif %}
 
     </div>

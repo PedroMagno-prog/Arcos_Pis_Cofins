@@ -1019,18 +1019,21 @@ def convert_valores_para_visualizacao_apuracao_pis_cofins_apr(apc):
         ramo.cofins_apr = locale_br(ramo.cofins_apr)
 
     for movimento in apc.movimentos_sinpag:
+        movimento.ramo = conserta_ramo(movimento.ramo)
         movimento.soma_vr_mov = locale_br(movimento.soma_vr_mov)
         movimento.soma_vr_cos_ced = locale_br(movimento.soma_vr_cos_ced)
         movimento.dif_soma_vr_mod_cos_ced = locale_br(movimento.dif_soma_vr_mod_cos_ced)
 
     for movimento in apc.movimentos_sinpagac:
+        movimento.ramo = conserta_ramo(movimento.ramo)
         movimento.soma_vr_mov = locale_br(movimento.soma_vr_mov)
 
     for movimento in apc.movimentos_salvados_vendidos:
+        movimento.ramo = conserta_ramo(movimento.ramo)
         movimento.soma_vr_mov = locale_br(movimento.soma_vr_mov)
 
-
     for movimento in apc.movimentos_recuperados:
+        movimento.ramo = conserta_ramo(movimento.ramo)
         movimento.soma_baixa_ind = locale_br(movimento.soma_baixa_ind)
         movimento.soma_baixa_res = locale_br(movimento.soma_baixa_res)
         movimento.soma_baixa_salv = locale_br(movimento.soma_baixa_salv)
@@ -1044,3 +1047,15 @@ def convert_valores_somente_ramo_para_visualizacao_pis_cofins_apr(ramo):
     ramo.pis_apr = locale_br(ramo.pis_apr)
     ramo.cofins_apr = locale_br(ramo.cofins_apr)
     pass
+
+def conserta_ramo(ramo):
+    ramo = ramo.strip()
+    if len(ramo) == 3:
+        ramo = '0'+ramo
+        ramo_list = list(ramo)
+    elif len(ramo) == 4:
+        ramo_list = list(ramo)
+    else:
+        return
+    ramo_list[1] += "."
+    return ''.join(ramo_list)
