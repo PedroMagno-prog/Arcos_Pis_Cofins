@@ -5,7 +5,7 @@
 
 <div class="jumbotron">
     <div class="container">
-        <h3> Entrada para Balancetes de PIS - COFINS </h3>
+        <h3> Importação de Balancetes </h3>
     </div>
 </div>
 
@@ -13,7 +13,7 @@
 <main role="main" class="container">
 
   <div class="jumbotron">
-      <p class="lead"> Entrada de Balancete (PIS/COFINS) </p>
+
 
   <form enctype="multipart/form-data" method="post" action="{% url 'ibs:cadastrar-balancete' %}">
         {%  csrf_token %}
