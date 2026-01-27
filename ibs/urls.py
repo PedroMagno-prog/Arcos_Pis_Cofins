@@ -82,4 +82,5 @@ urlpatterns = [
 
     path('exportar-csv-pis-cofins/<int:ano>/<int:mes>/', exportar_csv_pis_cofins, name='exportar_csv_pis_cofins'),
     path('exportar-csv-psl/<int:ano>/<int:mes>/', exportar_csv_psl, name='exportar_csv_psl'),
+    path('exportar-csv-pis-cofins-ramo/<int:ano>/<int:mes>/', exportar_csv_pis_cofins_ramo, name='exportar_csv_pis_cofins_ramo'),
 ]

@@ -5,14 +5,14 @@
 
 <div class="jumbotron">
     <div class="container">
-        <h3> Listagens mensais de balancetes (PIS/COFINS) </h3>
+        <h3> Listagens de Balancetes Importados </h3>
     </div>
 </div>
 
 <main role="main" class="container">
 
   <div class="jumbotron">
-      <p class="lead"> Listagem de balancetes  </p>
+
 
   <form enctype="multipart/form-data" method="post" action="{% url 'ibs:listar-balancetes' %}">
         {%  csrf_token %}
@@ -64,7 +64,7 @@
               <th>Ano </th>
               <th>Mês </th>
               <th>Versão </th>
-              <th>Exibir contas </th>
+
           </tr>
         </thead>
         <tbody>
@@ -75,50 +75,9 @@
              <td> {{balancete.ano}} </td>
              <td> {{balancete.mes}} </td>
              <td> {{balancete.versao}} </td>
-             <td> <a href="{% url 'ibs:exibir-contas' codigo=balancete.codigo%}"
-                     role="button" > + </a>  </td>
+
          </tr>
-   {% if balancete.contas or balacente.contas|length > 0 %}
-          <tr >
 
-
-
- <table style="width: 100%"
-
-        class=" table table-striped table-light table-sm table-bordered">
-        <thead>
-          <tr align="center">
-              <th>Código </th>
-              <th>Conta do Razão </th>
-              <th>Periodo </th>
-              <th>Saldo anterios </th>
-              <th>Débitos </th>
-              <th> Movimento </th>
-              <th> Saldo Acumulado </th>
-          </tr>
-        </thead>
-                   <tbody>
-            {% for conta in balancete.contas %}
-           <tr>
-            <td> {{conta.codigo }} </td>
-                <td> {{conta.conta_do_razao }} </td>
-                <td> {{conta.periodo }} </td>
-                <td> {{conta.saldo_anterior }} </td>
-                <td> {{conta.debitos }} </td>
-                <td> {{conta.movimento }} </td>
-                <td> {{conta.saldo_acumulado }} </td>
-            </tr>
-            {% endfor %}
-
-        </tbody>
-
-               </table>
-
-
-
-
-          </tr>
-   {% endif %}
 
 
         </tbody>
