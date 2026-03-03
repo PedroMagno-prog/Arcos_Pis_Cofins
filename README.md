@@ -24,5 +24,5 @@ The core logic is located within the `ibs` application:
 - `views.py`: Contains the business logic for tax apuration.
 - `templates/`: Custom UI components for tax forms and lists.
 
-##📄 License
+## 📄 License
 This project is developed for internal tax management purposes. All rights reserved.
