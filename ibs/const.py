@@ -8,7 +8,13 @@ LOGIN_PAGE = 'pages/login.html'
 RESETAR_SENHA_PAGE = 'pages/resetar-senha.html'
 
 CADASTRO_PIS_COFINS_PAGE = 'pages/calcular-pis-cofins.html'
+CADASTRO_PIS_COFINS_ABERTO_RAMO_PAGE = 'pages/calcular-pis-cofins-aberto-ramo.html'
+
+CONSULTA_PIS_COFINS_PAGE = 'pages/consultar-pis-cofins.html'
+CONSULTA_PIS_COFINS_ABERTO_RAMO_PAGE = 'pages/consultar-pis-cofins-aberto-ramo.html'
+
 CADASTRO_PSL_PAGE = 'pages/calcular-psl.html'
+CONSULTA_PSL_PAGE = 'pages/consultar-psl.html'
 
 BALANCETE_CADASTRO_PAGE = 'pages/balancete-cadastro.html'
 BALANCETE_LISTA_PAGE = 'pages/balancete-lista.html'

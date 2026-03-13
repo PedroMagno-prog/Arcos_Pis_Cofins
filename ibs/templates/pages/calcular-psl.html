@@ -65,7 +65,6 @@
      <table width="100%" class=" table table-light table-striped table-bordered">
         <thead align="center">
                 <tr>
-                    <th> Código </th>
                     <th> Conta </th>
                     <th> Descrição </th>
                     <th> Vigência </th>
@@ -76,7 +75,6 @@
                    <tbody align="center">
                      {%for conta in contas %}
                      <tr >
-                         <td> {{conta.codigo }}</td>
                          <td> {{conta.conta }}</td>
                          <td> {{conta.descricao }}</td>
                          <td> {% if conta.vigencia == True %}
@@ -107,7 +105,7 @@
                    </tbody>
 
        </table>
-        {% if not apsl %}
+
         <div class="form-group row">
 
             <div class="col-sm-4">
@@ -115,7 +113,7 @@
            </div>
 
         </div>
-    {% endif %}
+
 
 </form>
 
@@ -138,7 +136,7 @@
 
           {% if  apsl  %}
     <div class="jumbotron">
-           <p style="font-size: 20px; font-weight: bold;"> Ano : {{apsl.ano }}  Mês -  {{ apsl.mes }}</p>
+           <p style="font-size: 20px; font-weight: bold;"> {{ apsl.mes }} de {{ apsl.ano }}</p>
 
      <table width="100%" class=" table table-light table-striped table-bordered">
 
@@ -166,7 +164,7 @@
                    </tbody>
          <tfoot>
             <tr>
-                <th> Total </th>
+                <th> Total: </th>
                 <th> {{ apsl.total_base_calculo }} </th>
                 <th> {{ apsl.total_pis_psl }} </th>
                 <th> {{ apsl.total_cofins_psl }} </th>
@@ -178,8 +176,44 @@
 
      </table>
     </div>
+    {% if contas %}
+<hr style="margin-top: 40px; margin-bottom: 40px;">
+<h3>Detalhamento por Conta-Base (Soma dos Ramos)</h3>
+<p>
+  Abaixo está o movimento total para cada conta-base selecionada no cálculo.
+</p>
 
-         {% endif %}
+<div class="table-responsive">
+  <table class="table table-light table-striped table-bordered">
+    <thead class="thead-dark" align="center">
+      <tr>
+        <th scope="col">Código da Conta</th>
+        <th scope="col">Descrição da Conta</th>
+        <th scope="col">Movimento Total (R$)</th>
+      </tr>
+    </thead>
+    <tbody align="center">
+
+      {% for conta in contas %}
+      <tr>
+        <td>{{ conta.conta }}</td> <td>{{ conta.descricao }}</td>
+
+        <td style="text-align: center;">
+          {{ conta.total_movimento_conta_formatado }}
+        </td>
+      </tr>
+      {% endfor %}
+    <td>Base: {{ base_calculo_psl }}<td>PIS: {{ total_pis_psl }} <td>COFINS: {{ total_cofins_psl }}<td>
+
+    </tbody>
+  </table>
+ <a href="{% url 'ibs:exportar_csv_psl' ano=ano mes=mes%}" class="btn btn-success mr-2">
+           Exportar Apuração (CSV)
+        </a>
+    </div>
+
+{% endif %}
+    {% endif %}
 </div>
 
 </div>

@@ -1,9 +1,9 @@
 from django.shortcuts import render, loader, HttpResponse, redirect
 from django.http import HttpResponse, Http404
+from .models import *
 import csv
 from django.urls import reverse_lazy, reverse
 from .forms import UsuarioCadastroForm
-from .models import UsuarioModel, BaseCalculoPisCofins
 from .const import *
 import hmac
 from .util import *
@@ -11,19 +11,12 @@ from django.db.models import Q
 from django.db.models import Max
 from hmac import compare_digest
 from functools import wraps
+from django.contrib import messages
 import copy
+from .util_models import *
+from django.db import transaction
 
-"""
-python manage.py shell
-from ibs.models import UsuarioModel
-from ibs.util import *
 
-usuario  = UsuarioModel()
-usuario.nome = 'admin'
-usuario.email = 'admin@gmail.com'
-usuario.senha = criptografar_senha('admin')
-usuario.save()
-"""
 
 def autenticar_usuario(request):
     print("autenticar_usuario")
@@ -115,9 +108,17 @@ def login_required_admin(view_func):
 
 def montar_dados_tela_pis_cofins(ano, mes, base):
     relatorio_sinpag = RelatorioSINPAG.objects.filter(ano=ano, mes=mes).first()
+    print('Sinpag : ', relatorio_sinpag)
+
     relatorio_sinpagac = RelatorioSINPAGAC.objects.filter(ano=ano, mes=mes).first()
+    print('Sinpagac : ', relatorio_sinpagac)
+
     relatorio_salvados_vendidos = RelatorioSalvadosVendidosNovos.objects.filter(ano=ano, mes=mes).first()
+    print('Salvados Vendidos : ', relatorio_salvados_vendidos)
+
     relatorio_recuperados = RelatorioRecuperadosNovo.objects.filter(ano=ano, mes=mes).first()
+    print('Recuperados : ', relatorio_recuperados)
+
     balancete = Balancete.objects.filter(ano=ano, mes=mes).first() # Último balancete cadastrado
 
     if balancete:
@@ -153,6 +154,7 @@ def montar_dados_tela_pis_cofins(ano, mes, base):
         base_calculo = locale_br(base_calculo)
 
         print('Base de calculo :', base_calculo)
+
         if relatorio_sinpag:
             relatorio_sinpag.soma_vr_cos_ced = locale_br(relatorio_sinpag.soma_vr_cos_ced)
             relatorio_sinpag.soma_vr_mov = locale_br(relatorio_sinpag.soma_vr_mov)
@@ -162,8 +164,7 @@ def montar_dados_tela_pis_cofins(ano, mes, base):
             relatorio_sinpagac.soma_vr_mov = locale_br(relatorio_sinpagac.soma_vr_mov)
 
         if relatorio_recuperados:
-            relatorio_recuperados.dif_soma_baixa_ind_res_salv = locale_br(
-                relatorio_recuperados.dif_soma_baixa_ind_res_salv)
+            relatorio_recuperados.dif_soma_baixa_ind_res_salv = locale_br(relatorio_recuperados.dif_soma_baixa_ind_res_salv)
             relatorio_recuperados.soma_baixa_ind = locale_br(relatorio_recuperados.soma_baixa_ind)
             relatorio_recuperados.soma_baixa_res = locale_br(relatorio_recuperados.soma_baixa_res)
             relatorio_recuperados.soma_baixa_salv = locale_br(relatorio_recuperados.soma_baixa_salv)
@@ -188,7 +189,6 @@ def montar_dados_tela_pis_cofins(ano, mes, base):
         raise Exception('Balancete não encontrado.')
 
 
-from django.contrib import messages
 
 @login_required_usuario
 def resetar_senha(request):
@@ -218,6 +218,20 @@ def resetar_senha(request):
         return render(request, RESETAR_SENHA_PAGE, {'msg': msg})
 
 
+@login_required_usuario
+def consulta_psl_page(request):
+    return render(request, CONSULTA_PSL_PAGE)
+    pass
+
+@login_required_usuario
+def consulta_pis_cofins_page(request):
+    return render(request, CONSULTA_PIS_COFINS_PAGE)
+    pass
+
+@login_required_usuario
+def consulta_pis_cofins_page_aberto_ramo(request):
+    return render(request, CONSULTA_PIS_COFINS_ABERTO_RAMO_PAGE)
+    pass
 
 @login_required_usuario
 def home_page(request):
@@ -235,7 +249,6 @@ def cadastro_page(request):
 
 @login_required_usuario
 def cadastro_ibs_page(request):
-
     return render(request, CADASTRO_IBS_PAGE)
     pass
 
@@ -258,6 +271,9 @@ def cadastro_base_calculo_irpj_csll(request):
     return render(request, CADASTRO_BASE_CALCULO_IRPJ_CSLL_PAGE)
     pass
 
+def cadastro_pis_cofins_aberto_ramo(request):
+    return render(request, CADASTRO_PIS_COFINS_ABERTO_RAMO_PAGE)
+    pass
 
 @login_required_usuario
 def cadastro_pis_cofins(request):
@@ -277,9 +293,9 @@ def lista_base_calculo(request):
 
 @login_required_usuario
 def lista_balancetes(request):
-
     return render(request, BALANCETE_LISTA_PAGE)
     pass
+
 @login_required_usuario
 def cadastro_relatorio(request):
     return render(request, CADASTRO_RELATORIO_PAGE)
@@ -313,10 +329,8 @@ def carregar_dados_pis_cofins(request):
             ano = int(ano)
             mes = int(mes)
             dados = montar_dados_tela_pis_cofins(ano, mes, None)
-            return render(request, CADASTRO_PIS_COFINS_PAGE, {'dados' : dados,
-                                                              'ano' :  ano, 'mes' :  mes})
-
-
+            return render(request, CADASTRO_PIS_COFINS_PAGE, {'dados': dados,
+                                                              'ano':  ano, 'mes':  mes})
 
         else:
             raise Exception('Erro, Use POST para formulários.')
@@ -356,6 +370,112 @@ def carregar_contas_base_calculo(request, codigo):
     except Exception as ex:
         msg = 'Erro ao listar contas, ' + ex.msg
         return render(request, request.path, {'msg' :  msg})
+    pass
+
+# Consultas -> PSL / PIS-COFINS
+def consultar_psl(request):
+    try:
+        if request.method == 'POST':
+            ano = request.POST['ano']
+            mes = request.POST['mes']
+
+            if ano is None or len(ano) <= 0:
+                msg = 'Informe o ano do psl.'
+                return render(request, CONSULTA_PSL_PAGE, {'msg': msg})
+
+            elif mes is None or len(mes) <= 0:
+                msg = 'Informe o mês do psl.'
+                return render(request, CONSULTA_PSL_PAGE, {'msg': msg})
+
+            aps = ApuracaoPSL.objects.filter(ano=ano, mes=mes).all()
+            print(aps)
+            for ap in aps:
+                ap.mes = convert_mes_texto(int(mes))
+                ap.total_pis_psl = locale_br(ap.total_pis_psl)
+                ap.total_cofins_psl = locale_br(ap.total_cofins_psl)
+                ap.total_soma_pis_cofins = locale_br(ap.total_soma_pis_cofins)
+
+            return render(request, CONSULTA_PSL_PAGE, {'aps':  aps, 'ano' : ano,
+                                                              'mes' : convert_mes_texto(int(mes))})
+
+        else:
+            raise Exception('MethodEnvioError, Use POST para formulários.')
+
+    except Exception as ex:
+        msg = ex.args
+        return render(request, CONSULTA_PIS_COFINS_PAGE, {'msg' : msg})
+    pass
+
+def consultar_pis_cofins(request):
+    try:
+        if request.method == 'POST':
+            ano = request.POST['ano']
+            mes = request.POST['mes']
+
+            if ano is None or len(ano) <= 0:
+                msg = 'Informe o ano do pis.'
+                return render(request, CONSULTA_PIS_COFINS_PAGE, {'msg': msg})
+
+            elif mes is None or len(mes) <= 0:
+                msg = 'Informe o mês do pis.'
+                return render(request, CONSULTA_PIS_COFINS_PAGE, {'msg': msg})
+
+            apcs = ApuracaoPisCofins.objects.filter(ano=ano, mes=mes).all()
+            print(apcs)
+            for apc in apcs:
+                apc.pis = locale_br(apc.pis)
+                apc.cofins = locale_br(apc.cofins)
+                apc.mes = convert_mes_texto(int(mes))
+
+            return render(request, CONSULTA_PIS_COFINS_PAGE, {'apcs':  apcs, 'ano' : ano,
+                                                              'mes' : convert_mes_texto(int(mes))})
+
+        else:
+            raise Exception('MethodEnvioError, Use POST para formulários.')
+
+    except Exception as ex:
+        msg = ex.args
+        return render(request, CONSULTA_PIS_COFINS_PAGE, {'msg' : msg})
+    pass
+
+
+def consultar_pis_cofins_apr(request):
+    try:
+        if request.method == 'POST':
+            ano = request.POST['ano']
+            mes = request.POST['mes']
+
+            if ano is None or len(ano) <= 0:
+                msg = 'Informe o ano..'
+                return render(request, CONSULTA_PIS_COFINS_PAGE, {'msg': msg})
+
+            elif mes is None or len(mes) <= 0:
+                msg = 'Informe o mês..'
+                return render(request, CONSULTA_PIS_COFINS_PAGE, {'msg': msg})
+
+            apcs = (
+                ApuracaoPisCofinsAPR.objects
+                .filter(ano=ano, mes=mes)
+                .prefetch_related('ramoagrupadopiscofinsapr_set')
+            )
+
+            for apc in apcs:
+                ramos = list(apc.ramoagrupadopiscofinsapr_set.all())  # 👈 força avaliação
+                for ramo in ramos:
+                    convert_valores_somente_ramo_para_visualizacao_pis_cofins_apr(ramo)
+
+                apc.ramos_view = ramos  # 👈 atributo SOMENTE para visualização
+                apc.mes = convert_mes_texto(int(mes))
+
+            return render(request, CONSULTA_PIS_COFINS_ABERTO_RAMO_PAGE, {'apcs':  apcs, 'ano' : ano,
+                                                              'mes' : convert_mes_texto(int(mes))})
+
+        else:
+            raise Exception('MethodEnvioError, Use POST para formulários.')
+
+    except Exception as ex:
+        msg = ex.args
+        return render(request, CONSULTA_PIS_COFINS_ABERTO_RAMO_PAGE, {'msg' : msg})
     pass
 
 
@@ -601,6 +721,9 @@ def cadastrar_base_calculo_pis_cofins(request):
             descricao = request.POST['descricao']
             tipo_conta = request.POST['tipo']
 
+            if conta:
+                conta = conta.strip()
+
             if not conta or not descricao:
                 msg = 'Erro, por favor preencha todos os campos.'
                 return render(request, CADASTRO_BASE_CALCULO_PIS_COFINS_PAGE, {'msg' :  msg})
@@ -632,9 +755,16 @@ def cadastrar_base_calculo_psl(request):
             descricao = request.POST['descricao']
             tipo_conta = request.POST['tipo']
 
+            if conta:
+                conta = conta.strip()
+
             if not conta or not descricao:
                 msg = 'Erro, por favor preencha todos os campos.'
                 return render(request, CADASTRO_BASE_CALCULO_PSL_PAGE, {'msg' :  msg})
+            # Trava para evitar Contas Duplicadas
+            if ContaBaseCalculoPSL.objects.filter(conta=conta).exists():  # Conta  já existe no banco?
+                msg = f'Erro: A conta {conta} já está cadastrada.'
+                return render(request, CADASTRO_BASE_CALCULO_PSL_PAGE, {'msg': msg})
 
         conta_psl = ContaBaseCalculoPSL()
         conta_psl.conta = conta
@@ -739,11 +869,6 @@ def cadastrar_relatorio(request):
                     msg = 'Erro, informe o relatório.'
                     return render(request, CADASTRO_RELATORIO_PAGE, {'msg': msg})
 
-                relatorio_antigo = RelatorioSINPAG.objects.filter(ano=ano, mes=mes).first()
-
-                if relatorio_antigo:
-                    relatorio_antigo.delete()
-
                 relatorio.soma_vr_mov = calculos[0]
                 relatorio.soma_vr_cos_ced = calculos[1]
                 relatorio.dif_soma_cos_ced_vr_mov =calculos[2]
@@ -753,12 +878,11 @@ def cadastrar_relatorio(request):
                 print(locale_br(calculos[1]))
                 print(locale_br(calculos[2]))
 
+                with transaction.atomic():
+                    for movimento in movimentos:
+                        movimento.relatorio = relatorio
 
-                for movimento in movimentos:
-                    movimento.relatorio = relatorio
-                    # Comentado para teste no heroku
-                    #movimento.save()
-
+                    MovimentacaoSINPAG.objects.bulk_create(movimentos)
 
                 msg = 'Relatório enviado com sucesso.'
                 return render(request, CADASTRO_RELATORIO_PAGE, {'msg': msg})
@@ -771,10 +895,6 @@ def cadastrar_relatorio(request):
                 movimentos = load_movimentos_relatorio_sinpagac(request.FILES['relatorio'])
                 calculos = calculos_sinpagac(movimentos)
 
-                relatorio_antigo = RelatorioSINPAGAC.objects.filter(ano=ano, mes=mes).first()
-
-                if relatorio_antigo:
-                    relatorio_antigo.delete()
 
                 if movimentos is None or len(movimentos) <= 0:
                     msg = 'Erro, informe o relatório.'
@@ -783,35 +903,11 @@ def cadastrar_relatorio(request):
                 relatorio.soma_vr_mov = calculos
                 relatorio.save()
 
-                for movimento in movimentos:
-                    movimento.relatorio = relatorio
-                    movimento.save()
+                with transaction.atomic():
+                    for movimento in movimentos:
+                        movimento.relatorio = relatorio
 
-                msg = 'Relatório enviado com sucesso.'
-                return render(request, CADASTRO_RELATORIO_PAGE, {'msg': msg})
-
-            elif int(tipo) == 2:
-                relatorio = RelatorioSINPAGAC()
-                relatorio.ano = int(ano)
-                relatorio.mes = int(mes)
-
-                movimentos = load_movimentos_relatorio_sinpagac(request.FILES['relatorio'])
-
-                relatorio_antigo = RelatorioSINPAGAC.objects.filter(ano=ano, mes=mes).first()
-
-                if relatorio_antigo:
-                    relatorio_antigo.delete()
-
-                if movimentos is None or len(movimentos) <= 0:
-                    msg = 'Erro, informe o relatório.'
-                    return render(request, CADASTRO_RELATORIO_PAGE, {'msg': msg})
-
-                relatorio.save()
-
-                for movimento in movimentos:
-                    movimento.relatorio = relatorio
-                    movimento.vr_mov = convert_valor(movimento.vr_mov)
-                    movimento.save()
+                    MovimentacaoSINPAGAC.objects.bulk_create(movimentos)
 
                 msg = 'Relatório enviado com sucesso.'
                 return render(request, CADASTRO_RELATORIO_PAGE, {'msg': msg})
@@ -824,10 +920,6 @@ def cadastrar_relatorio(request):
                 movimentos = load_movimentos_relatorio_salvados_vendidos_novos(request.FILES['relatorio'])
                 calculo = calculos_salvados_vendidos_novos(movimentos)
 
-                relatorio_antigo = RelatorioSalvadosVendidosNovos.objects.filter(ano=ano, mes=mes).first()
-
-                if relatorio_antigo:
-                    relatorio_antigo.delete()
 
                 if movimentos is None or len(movimentos) <= 0:
                     msg = 'Erro, informe o relatório.'
@@ -836,10 +928,12 @@ def cadastrar_relatorio(request):
                 relatorio.soma_vr_mov = calculo
                 relatorio.save()
 
-                for movimento in movimentos:
-                    movimento.relatorio = relatorio
-                    movimento.vr_mov = convert_valor(movimento.vr_mov)
-                    #movimento.save()
+                with transaction.atomic():
+                    for movimento in movimentos:
+                        movimento.relatorio = relatorio
+
+                    MovimentacaoSalvadosVendidosNovos.objects.bulk_create(movimentos)
+
 
                 msg = 'Relatório enviado com sucesso.'
                 return render(request, CADASTRO_RELATORIO_PAGE, {'msg': msg})
@@ -852,10 +946,6 @@ def cadastrar_relatorio(request):
                 movimentos = load_movimentos_relatorio_recuperados_novo(request.FILES['relatorio'])
                 calculos = calculos_recuperados_novos(movimentos)
 
-                relatorio_antigo = RelatorioRecuperadosNovo.objects.filter(ano=ano, mes=mes).first()
-
-                if relatorio_antigo:
-                    relatorio_antigo.delete()
 
                 if movimentos is None or len(movimentos) <= 0:
                     msg = 'Erro, informe o relatório.'
@@ -868,11 +958,12 @@ def cadastrar_relatorio(request):
 
                 relatorio.save()
 
-                for movimento in movimentos:
-                    movimento.relatorio = relatorio
-                    #movimento.vr_mov = convert_valor(movimento.vr_mov)
-                    # Comentado para testes no heroku
-                    #movimento.save()
+                with transaction.atomic():
+                    for movimento in movimentos:
+                        movimento.relatorio = relatorio
+
+                    MovimentacaoRecuperadosNovo.objects.bulk_create(movimentos)
+
 
                 msg = 'Relatório enviado com sucesso.'
                 return render(request, CADASTRO_RELATORIO_PAGE, {'msg': msg})
@@ -890,6 +981,188 @@ def cadastrar_relatorio(request):
                       {'msg': 'Erro no formulário preencha todos os campos.' + str(ex.args)})
 
     pass
+
+@login_required_usuario
+def calcular_pis_cofins_aberto_ramo(request, ano, mes):
+    try:
+
+        balancete = Balancete.objects.filter(ano=ano, mes=mes).first()
+        print(balancete)
+
+        apc = ApuracaoPisCofinsAPR()
+        apc.ano = ano
+        apc.mes = mes
+
+        relatorio_sinpag = RelatorioSINPAG.objects.filter(ano=ano, mes=mes).order_by('-data_entrada').first()
+        relatorio_sinpagac = RelatorioSINPAGAC.objects.filter(ano=ano, mes=mes).order_by('-data_entrada').first()
+        relatorio_salvados_vendidos = RelatorioSalvadosVendidosNovos.objects.filter(ano=ano, mes=mes).order_by('-data_entrada').first()
+        relatorio_recuperados = RelatorioRecuperadosNovo.objects.filter(ano=ano, mes=mes).order_by('-data_entrada').first()
+
+        if balancete:
+            balancete = Balancete.objects.filter(ano=balancete.ano, mes=balancete.mes).latest('versao')
+
+            base_calculo_pis_cofins = ContaBaseCalculoPisCofins.objects.all()
+            print('Base de calculo')
+            print(base_calculo_pis_cofins)
+
+            contas_finais = []
+            # Pegar todos os ramos do balancete
+            # Set para não duplicar os elementos da lista
+            lista_ramos = set()
+
+            if balancete:
+                balancete = Balancete.objects.filter(ano=balancete.ano, mes=balancete.mes).latest('versao')
+
+                for base_calculo in base_calculo_pis_cofins:
+                    contas_balancetes = ContaBalancete.objects.filter(conta_do_razao=base_calculo.conta,
+                                                                      balancete_id=balancete.codigo).all()
+                    # Nessa lista com listas com as contas selecionadas no balancete.
+                    print('Base de calculo da conta selecinada', base_calculo.conta)
+                    if verificar_tipo_conta_pis_cofins_apr(base_calculo.tipo_conta, contas_balancetes):
+                        contas_finais.extend(contas_balancetes)
+                        lista_ramos.update(conta.grupo_ramo for conta in contas_balancetes)
+                        print('----' * 30)
+
+                contas = []
+                print(contas_finais)
+
+                for conta_base in base_calculo_pis_cofins:
+                    conta_apc = ContaApuracaoPisCofinsAPR()
+                    conta_apc.conta = conta_base.conta
+                    conta_apc.descricao = conta_base.descricao
+                    contas.append(conta_apc)
+
+                apc.contas = contas
+
+                lista_ramos = list(set(lista_ramos))
+
+                ramos = agrupamento_somatorio_por_ramo_pis_cofins(contas_finais, lista_ramos)
+
+
+                ramos_indefinidos = calcular_remocao_dos_ramos_indefinidos_pis_cofins(ramos)
+                somatorio = somatorio_saldo_ramos_pis_cofins(ramos)
+
+                print(somatorio)
+
+                if ramos_indefinidos:
+                    print('Somatorio ramos: ', locale_br(somatorio))
+                    percentuais = calcular_percentual_relativo_por_ramo_pis_cofins(ramos, somatorio)
+
+                    print('Ramos Indefindos!')
+                    for r in ramos_indefinidos:
+                        print(r)
+
+                    print('Ramos da lista')
+                    for perc in percentuais:
+                        print('Ramos %s : valor %s ' % (perc[0], perc[1]))
+
+                    valores_diluidos_por_ramo = []
+
+                    for ri in ramos_indefinidos:
+                        valor_diluido = calcular_valor_diluicao_por_ramo_indefinido_pis_cofins(ri, percentuais)
+                        valores_diluidos_por_ramo.append(valor_diluido)
+
+                    for valor_diluido in valores_diluidos_por_ramo:
+                        for valor in valor_diluido:
+                            print('Ramos %s : valor %s diluição : %s '
+                                  % (valor[0], valor[1], locale_br(valor[2])))
+                        print('-------' * 20)
+                    print('-----' * 20)
+
+                    for valor_diluido in valores_diluidos_por_ramo:
+                        calcular_valor_base_ramo_pis_cofins(ramos, valor_diluido)
+                        pass
+
+
+                    # RAMOS DO BALANCETE -> (ramo, receita)
+                    #apc.ramos = calcular_remocao_dos_ramos_indefinidos(ramos)
+
+                    apc.ramos = ramos
+                    for ramo in apc.ramos:
+                        print(ramo)
+                        print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+                        print(type(ramo))
+
+                    if relatorio_sinpag:
+                        apc.relatorio_sinpag = relatorio_sinpag
+                        movimentos_sinpag = MovimentacaoSINPAG.objects.filter(relatorio=relatorio_sinpag)
+                        movimentos_agrupados_sinpag = agrupamento_somatorio_por_ramo_pis_cofins_relatorios_sinpag(movimentos_sinpag)
+                        soma_total_dif_vr_mod_cos_ced = 0
+                        for mov_agrup in movimentos_agrupados_sinpag:
+                            soma_total_dif_vr_mod_cos_ced = soma_total_dif_vr_mod_cos_ced + mov_agrup.dif_soma_vr_mod_cos_ced
+
+                        apc.soma_total_dif_vr_mod_cos_ced = locale_br(soma_total_dif_vr_mod_cos_ced)
+
+                        apc.movimentos_sinpag = movimentos_agrupados_sinpag
+
+                    if relatorio_sinpagac:
+                        apc.relatorio_sinpagac = relatorio_sinpagac
+                        movimentos_sinpagac = MovimentacaoSINPAGAC.objects.filter(relatorio=relatorio_sinpagac)
+                        movimentos_agrupados_sinpagac = agrupamento_somatorio_por_ramo_pis_cofins_relatorios_sinpagac(
+                            movimentos_sinpagac)
+                        total_soma_agrupado_vr_mov = 0
+
+                        for mov_agrup in movimentos_agrupados_sinpagac:
+                            total_soma_agrupado_vr_mov += mov_agrup.soma_vr_mov
+
+                        apc.total_soma_agrupado_vr_mov = locale_br(total_soma_agrupado_vr_mov)
+                        apc.movimentos_sinpagac = movimentos_agrupados_sinpagac
+
+                    if relatorio_salvados_vendidos:
+                        apc.relatorio_salvados_vendidos = relatorio_salvados_vendidos
+                        movimentos_salvados_vendidos = MovimentacaoSalvadosVendidosNovos.objects.filter(relatorio=relatorio_salvados_vendidos)
+                        movimentos_agrupados_salvados_vendidos = agrupamento_somatorio_por_ramo_pis_cofins_relatorios_salvados_vendidos(
+                            movimentos_salvados_vendidos)
+                        total_soma_agrupado_salvados_vendidos_vr_mov = 0
+
+                        for mov_agrup in movimentos_agrupados_salvados_vendidos:
+                            total_soma_agrupado_salvados_vendidos_vr_mov += mov_agrup.soma_vr_mov
+
+                        apc.total_soma_agrupado_salvados_vendidos_vr_mov = locale_br(total_soma_agrupado_salvados_vendidos_vr_mov)
+                        apc.movimentos_salvados_vendidos = movimentos_agrupados_salvados_vendidos
+
+                    if relatorio_recuperados:
+                        apc.relatorio_recuperados = relatorio_recuperados
+                        movimentos_recuperados = MovimentacaoRecuperadosNovo.objects.filter(relatorio=relatorio_recuperados)
+                        movimentos_agrupados_recuperados = agrupamento_somatorio_por_ramo_pis_cofins_relatorios_recuperados(movimentos_recuperados)
+
+                        total_soma_agrupado_dif_soma_baixa_ind_res_salv = 0
+
+                        for mov_agrup in movimentos_agrupados_recuperados:
+                            total_soma_agrupado_dif_soma_baixa_ind_res_salv += mov_agrup.dif_soma_baixa_ind_res_salv
+
+                        apc.total_soma_agrupado_dif_soma_baixa_ind_res_salv = locale_br(total_soma_agrupado_dif_soma_baixa_ind_res_salv)
+                        apc.movimentos_recuperados = movimentos_agrupados_recuperados
+
+                    # Calcular o pis e cofins aberto por ramo
+                    calcular_apuracao_pis_cofins_apr(apc)
+                    # Gravando o objeto da apuração pis cofins -> aberto por ramo
+                    manter_limite_apuracoes_apuracao_pis_cofins_apr(apc)
+                    vincular_contas_e_ramos_apc(apc, apc.contas, apc.ramos)
+                    vincular_relatorios_agrupados_apuracao_pis_cofins_apr(apc)
+
+                    # Gravar antes de executar o converter visualização
+
+                    # Visualização dos dados
+                    convert_valores_para_visualizacao_apuracao_pis_cofins_apr(apc)
+
+            return render(request, CADASTRO_PIS_COFINS_ABERTO_RAMO_PAGE, {'apc': apc, 'ano':
+                ano, 'mes': mes})
+
+
+    except Exception as ex:
+        print(ex.args)
+        context = {
+            'msg_1': 'Erro, ' + str(ex.args),
+            'ano_selecionado': request.session.get('ano_selecionado'),
+            'mes_selecionado': request.session.get('mes_selecionado'),
+            'ano': int(request.session.get('ano_selecionado', 0)),
+            'mes': int(request.session.get('mes_selecionado', 0)),
+        }
+        return render(request, CADASTRO_PIS_COFINS_ABERTO_RAMO_PAGE, context)
+
+    pass
+
 
 @login_required_usuario
 def calcular_pis_cofins(request):
@@ -911,9 +1184,9 @@ def calcular_pis_cofins(request):
             print('Retenção PIS :' + retencao_pis)
             print('Compensação PIS : ' + compensacao_pis)
 
-            base = BaseCalculoPisCofins()
-            base.ano = int(ano)
-            base.mes = int(mes)
+            apc = ApuracaoPisCofins()
+            apc.ano = int(ano)
+            apc.mes = int(mes)
 
             balancete = Balancete.objects.filter(ano=ano, mes=mes).first()
 
@@ -936,86 +1209,85 @@ def calcular_pis_cofins(request):
                         contas.append(conta_balancete)
 
                 balancete.contas = contas
+
+
+                print('Contas selecionadas para o balancete : ', balancete.contas)
                 soma_receita = calcular_soma_receitas(balancete.contas)
-                base.soma_receita_balancete = soma_receita
+                apc.soma_receita_balancete = soma_receita
 
                 relatorio_sinpag = RelatorioSINPAG.objects.filter(ano=ano, mes=mes).first()
                 relatorio_sinpagac = RelatorioSINPAGAC.objects.filter(ano=ano, mes=mes).first()
                 relatorio_salvados_vendidos = RelatorioSalvadosVendidosNovos.objects.filter(ano=ano, mes=mes).first()
                 relatorio_recuperados = RelatorioRecuperadosNovo.objects.filter(ano=ano, mes=mes).first()
 
-                # Calculo final com a possibilidade de um relatorio não estar presente.
-                if not relatorio_sinpag:
-                    relatorio_sinpag = RelatorioSINPAG()
-                    relatorio_sinpag.dif_soma_cos_ced_vr_mov = 0
-                    relatorio_sinpag.soma_vr_mov = 0
-                    relatorio_sinpag.soma_vr_cos_ced = 0
+                apc.relatorio_sinpag = relatorio_sinpag
+                apc.relatorio_sinpagac = relatorio_sinpagac
+                apc.relatorio_recuperados = relatorio_recuperados
+                apc.relatorio_salvados_vendidos = relatorio_salvados_vendidos
 
-                if not relatorio_sinpagac:
-                    relatorio_sinpagac = RelatorioSINPAGAC()
-                    relatorio_sinpagac.soma_vr_mov = 0
-
-                if not relatorio_recuperados:
-                    relatorio_recuperados = RelatorioRecuperadosNovo()
-                    relatorio_recuperados.soma_baixa_ind = 0
-                    relatorio_recuperados.soma_baixa_salv = 0
-                    relatorio_recuperados.soma_baixa_res = 0
-                    relatorio_recuperados.dif_soma_baixa_ind_res_salv = 0
-
-                if not relatorio_salvados_vendidos:
-                    relatorio_salvados_vendidos = RelatorioSalvadosVendidosNovos()
-                    relatorio_salvados_vendidos.soma_vr_mov = 0
-
-                dif_soma_receita_sinpag_sinpagac = base.soma_receita_balancete + (
+                dif_soma_receita_sinpag_sinpagac = apc.soma_receita_balancete + (
                     relatorio_sinpag.dif_soma_cos_ced_vr_mov + relatorio_sinpagac.soma_vr_mov)
 
-                base_calculo = (dif_soma_receita_sinpag_sinpagac - ( relatorio_recuperados.dif_soma_baixa_ind_res_salv + \
+                base_calculo = (dif_soma_receita_sinpag_sinpagac - (relatorio_recuperados.dif_soma_baixa_ind_res_salv + \
                     relatorio_salvados_vendidos.soma_vr_mov)) * -1
 
                 print(dif_soma_receita_sinpag_sinpagac)
                 print(base_calculo)
 
-                base.pis_retido = float(retencao_pis.replace(",", "."))
-                base.compensacao_pis = float(compensacao_pis.replace(",", "."))
-                base.cofins_retido = float(retencao_cofins.replace(",", "."))
-                base.compensacao_cofins = float(compensacao_cofins.replace(",", "."))
+                apc.pis_retido = float(retencao_pis.replace(",", "."))
+                apc.compensacao_pis = float(compensacao_pis.replace(",", "."))
+                apc.cofins_retido = float(retencao_cofins.replace(",", "."))
+                apc.compensacao_cofins = float(compensacao_cofins.replace(",", "."))
 
-                base.pis = base_calculo * 0.0065
-                base.pis_recolher = base.pis - (base.pis_retido + base.compensacao_pis)
-                base.pis_darf = base.pis_recolher
+                apc.pis = base_calculo * 0.0065
+                apc.pis_recolher = apc.pis - (apc.pis_retido + apc.compensacao_pis)
+                apc.pis_darf = apc.pis_recolher
 
-                base.cofins = base_calculo * 0.04
-                base.cofins_recolher = base.cofins - (base.cofins_retido + base.compensacao_cofins)
-                base.cofins_darf = base.cofins_recolher
+                apc.cofins = base_calculo * 0.04
+                apc.cofins_recolher = apc.cofins - (apc.cofins_retido + apc.compensacao_cofins)
+                apc.cofins_darf = apc.cofins_recolher
+
+                print('Salvando a apucação do pis cofins')
+                manter_limite_apuracoes_piscofins(apc)
+
+                for conta in balancete.contas:
+                    conta_apc = ContaApuracaoPisCofins()
+                    conta_apc.conta = conta.conta_do_razao
+                    conta_apc.descricao = conta.periodo
+                    conta_apc.soma_movimento = conta.movimento
+                    conta_apc.apuracao_pis_cofins = apc
+                    conta_apc.save()
+                    print('Conta da apucação pis cofins', conta_apc)
 
                 # base.pis = locale_br(base.pis)  {possível simplificação!}
                 dados_para_sessao_e_tela = {
-                    'pis_valor_str': locale_br(base.pis),
-                    'pis_recolher_str': locale_br(base.pis_recolher),
-                    'pis_darf_str': locale_br(base.pis_darf),
-                    'pis_retido_str': locale_br(base.pis_retido),
-                    'pis_compensado_str': locale_br(base.compensacao_pis),
-                    'cofins_valor_str': locale_br(base.cofins),
-                    'cofins_recolher_str': locale_br(base.cofins_recolher),
-                    'cofins_darf_str': locale_br(base.cofins_darf),
-                    'cofins_retido_str': locale_br(base.cofins_retido),
-                    'cofins_compensado_str': locale_br(base.compensacao_cofins)
+                    'pis_valor_str': locale_br(apc.pis),
+                    'pis_recolher_str': locale_br(apc.pis_recolher),
+                    'pis_darf_str': locale_br(apc.pis_darf),
+                    'pis_retido_str': locale_br(apc.pis_retido),
+                    'pis_compensado_str': locale_br(apc.compensacao_pis),
+                    'cofins_valor_str': locale_br(apc.cofins),
+                    'cofins_recolher_str': locale_br(apc.cofins_recolher),
+                    'cofins_darf_str': locale_br(apc.cofins_darf),
+                    'cofins_retido_str': locale_br(apc.cofins_retido),
+                    'cofins_compensado_str': locale_br(apc.compensacao_cofins)
                 }
                 request.session['ultimo_calculo_pis_cofins'] = dados_para_sessao_e_tela
                 # base.pis = locale_br(base.pis)  {possível simplificação!}
-                base.pis = dados_para_sessao_e_tela['pis_valor_str']
-                base.pis_recolher = dados_para_sessao_e_tela['pis_recolher_str']
-                base.pis_darf = dados_para_sessao_e_tela['pis_darf_str']
-                base.pis_retido = dados_para_sessao_e_tela['pis_retido_str']
-                base.compensacao_pis = dados_para_sessao_e_tela['pis_compensado_str']
-                base.cofins = dados_para_sessao_e_tela['cofins_valor_str']
-                base.cofins_recolher = dados_para_sessao_e_tela['cofins_recolher_str']
-                base.cofins_darf = dados_para_sessao_e_tela['cofins_darf_str']
-                base.cofins_retido = dados_para_sessao_e_tela['cofins_retido_str']
-                base.compensacao_cofins = dados_para_sessao_e_tela['cofins_compensado_str']
+                apc.pis = dados_para_sessao_e_tela['pis_valor_str']
+                apc.pis_recolher = dados_para_sessao_e_tela['pis_recolher_str']
+                apc.pis_darf = dados_para_sessao_e_tela['pis_darf_str']
+                apc.pis_retido = dados_para_sessao_e_tela['pis_retido_str']
+                apc.compensacao_pis = dados_para_sessao_e_tela['pis_compensado_str']
+                apc.cofins = dados_para_sessao_e_tela['cofins_valor_str']
+                apc.cofins_recolher = dados_para_sessao_e_tela['cofins_recolher_str']
+                apc.cofins_darf = dados_para_sessao_e_tela['cofins_darf_str']
+                apc.cofins_retido = dados_para_sessao_e_tela['cofins_retido_str']
+                apc.compensacao_cofins = dados_para_sessao_e_tela['cofins_compensado_str']
 
-                dados = montar_dados_tela_pis_cofins(base.ano, base.mes, base)
-                print(base)
+                dados = montar_dados_tela_pis_cofins(apc.ano, apc.mes, apc)
+                print(apc)
+
                 context = {
                     'dados': dados,
                     'msg_1': 'Dados gerados com sucesso.',
@@ -1061,9 +1333,14 @@ def calcular_psl(request):
             print('ANO BALANCETE : ' + str(ano))
             print('MES BALANCETE : ' + str(mes))
 
+            ano = int(ano)
+            mes = int(mes)
+
+            # apsl será usada no Template html
             apsl = ApuracaoPSL()
-            apsl.ano = int(ano)
-            apsl.mes = int(mes)
+            apsl.ano = ano
+            apsl.mes = mes
+
             # Contas selecionadas no balancete.
             codigo_contas = request.POST.getlist('contas')
             codigo_contas = [int(i) for i in codigo_contas]
@@ -1097,6 +1374,30 @@ def calcular_psl(request):
 
             if balancete:
                 balancete = Balancete.objects.filter(ano=balancete.ano, mes=balancete.mes).latest('versao')
+
+                # modificação para SOMAR o movimento das contas antes de separar por ramo
+                contas_com_total = list(contas)
+
+                base_calculo_psl = 0
+
+                print('Calculando totais individuais por conta...')
+                for c in contas_com_total:
+                    # 1. Chamamos a função para calcular o total
+                    total_conta = soma_movimento_conta_psl(c, balancete)
+
+                    # 2. Anexamos o resultado ao objeto 'c'
+                    c.total_movimento_conta = total_conta
+
+                    # 3. Anexamos o valor formatado (você já usa locale_br)
+                    c.total_movimento_conta_formatado = locale_br(total_conta)
+
+                    base_calculo_psl += total_conta
+
+                    print(f'Conta: {c.descricao}, Total: {c.total_movimento_conta_formatado}')
+
+                total_pis_psl = locale_br(base_calculo_psl*0.0065)
+                total_cofins_psl = locale_br(base_calculo_psl * 0.04)
+                base_calculo_psl = locale_br(base_calculo_psl)
 
                 for base_calculo in contas:
                     contas_balancetes = ContaBalancete.objects.filter(conta_do_razao=base_calculo.conta,
@@ -1159,7 +1460,7 @@ def calcular_psl(request):
                 apsl.ramos = ramos
 
                 # Salvar o objeto da psl no banco de dados
-                apsl.save()
+                manter_limite_apuracoes_apls(apsl)
 
                 # Salvar os ramos
                 for ramo in apsl.ramos:
@@ -1203,8 +1504,9 @@ def calcular_psl(request):
             apsl.mes = convert_mes_texto(apsl.mes)
             print(apsl)
 
-            return render(request, CADASTRO_PSL_PAGE, {'apsl' : apsl, 'contas' :  contas})
-
+            return render(request, CADASTRO_PSL_PAGE, {'apsl' : apsl,
+            'contas' :  contas_com_total, 'ano': ano, 'mes': mes, 'base_calculo_psl': base_calculo_psl,
+            'total_pis_psl': total_pis_psl, 'total_cofins_psl':total_cofins_psl})
 
         else:
             raise Exception('Erro, use POST para formulários ')
@@ -1217,6 +1519,74 @@ def calcular_psl(request):
 
     pass
 
+
+def carregar_dados_pis_cofins_aberto_ramo(request):
+    try:
+        if request.method == 'POST':
+            print('Calculo do PIS Cofins aberto por Ramo')
+
+            ano = request.POST['ano']
+            mes = request.POST['mes']
+
+            if ano is None or len(ano) <= 0:
+                msg = 'Informe o ano do balancete.'
+                return render(request, CADASTRO_PIS_COFINS_ABERTO_RAMO_PAGE, {'msg': msg})
+
+            elif mes is None or len(mes) <= 0:
+                msg = 'Informe o mês do balancete.'
+                return render(request, CADASTRO_PIS_COFINS_ABERTO_RAMO_PAGE, {'msg': msg})
+
+                # Salvando o ano e mês na sessão
+                request.session['ano_selecionado'] = ano
+                request.session['mes_selecionado'] = mes
+
+            ano = int(ano)
+            mes = int(mes)
+
+            balancete = Balancete.objects.filter(ano=ano, mes=mes).first()
+            print(balancete)
+
+
+
+            if balancete:
+                balancete = Balancete.objects.filter(ano=balancete.ano, mes=balancete.mes).latest('versao')
+
+
+                base_calculo_pis_cofins = ContaBaseCalculoPisCofins.objects.all()
+                print('Base de calculo')
+                print(base_calculo_pis_cofins)
+
+                contas = []
+
+                for base_calculo in base_calculo_pis_cofins:
+                    conta_balancete = ContaBalancete.objects.filter(conta_do_razao=base_calculo.conta,
+                                                                      balancete_id=balancete.codigo).first()
+
+                    if conta_balancete:
+                        contas.append(base_calculo)
+
+                return render(request, CADASTRO_PIS_COFINS_ABERTO_RAMO_PAGE, {'contas' :  contas, 'ano':
+                    ano, 'mes':  mes})
+
+            else:
+                raise Exception('Balancete não encontrado.')
+
+        else:
+            raise Exception('Erro, use POST para formulários ')
+
+
+    except Exception as ex:
+        print(ex.args)
+        context = {
+            'msg_1': 'Erro, ' + str(ex.args),
+            'ano_selecionado': request.session.get('ano_selecionado'),
+            'mes_selecionado': request.session.get('mes_selecionado'),
+            'ano': int(request.session.get('ano_selecionado', 0)),
+            'mes': int(request.session.get('mes_selecionado', 0)),
+        }
+        return render(request,CADASTRO_PIS_COFINS_ABERTO_RAMO_PAGE, context)
+
+    pass
 
 @login_required_usuario
 def carregar_dados_psl(request):
@@ -1296,8 +1666,16 @@ def exportar_csv_pis_cofins(request, ano, mes):
         Apuração de PIS/COFINS
     cada seção é separada por uma linha em branco.
     """
+    from datetime import datetime
+
+    data_hora_atual = datetime.now().strftime("%d-%m-%Y_%Hh%M")
+
+    # Monta o nome do arquivo com separadores para melhor leitura
+    # Ex: Apuracao_Pis_Cofins_Agosto_2025_12-01-2026_18h42.csv
+    nome_arquivo = f"Apuracao_Pis_Cofins_{convert_mes_texto(mes)}_{ano}_{data_hora_atual}.csv"
+
     response = HttpResponse(content_type='text/csv; charset=utf-8')
-    response['Content-Disposition'] = f'attachment; filename="Apuracao_Pis_Cofins_{convert_mes_texto(mes)}{ano}.csv"'
+    response['Content-Disposition'] = f'attachment; filename="{nome_arquivo}"'
 
     writer = csv.writer(response, delimiter=';')
 
@@ -1373,5 +1751,287 @@ def exportar_csv_pis_cofins(request, ano, mes):
         ])
     else:
         writer.writerow(['Nenhum cálculo recente encontrado na sessão para exportar.'])
+
+    return response
+
+
+@login_required_usuario
+def exportar_csv_psl(request, ano, mes):
+    """
+    Exporta um relatório CSV completo do PSL.
+    Corrige o erro de tipo convertendo float -> string (locale_br) -> string limpa.
+    Nome do arquivo: Apuracao_PSL_Mes_Ano_dd-mm-aaaa_HHhMM.csv
+    """
+    from datetime import datetime
+
+    # Gera timestamp: Ex: 12-01-2026_18h42
+    data_hora_atual = datetime.now().strftime("%d-%m-%Y_%Hh%M")
+    nome_arquivo = f"Apuracao_PSL_{convert_mes_texto(mes)}_{ano}_{data_hora_atual}.csv"
+
+    response = HttpResponse(content_type='text/csv; charset=utf-8')
+    response['Content-Disposition'] = f'attachment; filename="{nome_arquivo}"'
+
+    writer = csv.writer(response, delimiter=';')
+
+    try:
+        # 1. Busca a apuração
+        apsl = ApuracaoPSL.objects.filter(ano=ano, mes=mes).order_by('-data_cadastro').first()
+
+        if not apsl:
+            writer.writerow(['Nenhuma apuracao encontrada para este periodo.'])
+            return response
+
+        # 2. Busca o balancete para recalcular movimentos de contas individuais
+        balancete = Balancete.objects.filter(ano=ano, mes=mes).first()
+        if balancete:
+            balancete = Balancete.objects.filter(ano=balancete.ano, mes=balancete.mes).latest('versao')
+
+        # ==============================================================================
+        # BLOCO 1: RESUMO POR RAMO
+        # ==============================================================================
+        writer.writerow(['--- RESUMO POR RAMO E TOTAIS ---'])
+        writer.writerow(['Ramo', 'Base Calculo', 'PIS (0.65%)', 'COFINS (4%)', 'Total (PIS+COFINS)'])
+
+        ramos = RamoAgrupadoPSL.objects.filter(apuracao_psl=apsl).all()
+
+        for ramo in ramos:
+            # Aplica locale_br para virar "R$ X,XX" e depois limpa para "X,XX"
+            writer.writerow([
+                ramo.ramo,
+                limpar_string_moeda(locale_br(ramo.base_calculo)),
+                limpar_string_moeda(locale_br(ramo.pis_psl)),
+                limpar_string_moeda(locale_br(ramo.cofins_psl)),
+                limpar_string_moeda(locale_br(ramo.total_soma_pis_cofins))
+            ])
+
+        writer.writerow([])
+        writer.writerow([
+            'TOTAL GERAL',
+            limpar_string_moeda(locale_br(apsl.total_base_calculo)),
+            limpar_string_moeda(locale_br(apsl.total_pis_psl)),
+            limpar_string_moeda(locale_br(apsl.total_cofins_psl)),
+            limpar_string_moeda(locale_br(apsl.total_soma_pis_cofins))
+        ])
+
+        writer.writerow([])
+        writer.writerow([])
+
+        # ==============================================================================
+        # BLOCO 2: DETALHAMENTO POR CONTA
+        # ==============================================================================
+        writer.writerow(['--- DETALHAMENTO POR CONTA (BASES) ---'])
+        writer.writerow(['Conta', 'Descricao', 'Movimento Total'])
+
+        contas_apuracao = ContaApuracaoPSL.objects.filter(apuracao_psl=apsl).all()
+
+        if contas_apuracao:
+            for conta_obj in contas_apuracao:
+                valor_movimento = 0.0
+                if balancete:
+                    valor_movimento = soma_movimento_conta_psl(conta_obj, balancete)
+
+                writer.writerow([
+                    conta_obj.conta,
+                    conta_obj.descricao,
+                    limpar_string_moeda(locale_br(valor_movimento))
+                ])
+
+            # Totais no fim da lista de contas
+            writer.writerow([])
+            writer.writerow([
+                'Base: ' + limpar_string_moeda(locale_br(apsl.total_base_calculo)),
+                'PIS: ' + limpar_string_moeda(locale_br(apsl.total_pis_psl)),
+                'COFINS: ' + limpar_string_moeda(locale_br(apsl.total_cofins_psl))
+            ])
+        else:
+            writer.writerow(['Nenhuma conta vinculada a esta apuracao.'])
+
+    except Exception as ex:
+        writer.writerow([])
+        writer.writerow([f"Erro ao gerar relatorio: {str(ex)}"])
+        print(f"Erro export csv psl: {ex}")
+
+    return response
+
+
+@login_required_usuario
+def exportar_csv_pis_cofins_ramo(request, ano, mes):
+    """
+    Exporta um relatório CSV completo do PIS/COFINS Aberto por Ramo (APR).
+    Estrutura:
+      1. Resumo Geral por Ramo (Receita, Base, PIS, COFINS)
+      2. Relatório Sinpag (detalhado por ramo)
+      3. Relatório Sinpagac (detalhado por ramo)
+      4. Relatório Salvados e Vendidos (detalhado por ramo)
+      5. Relatório Recuperados (detalhado por ramo)
+
+    Nome do arquivo: Apuracao_Pis_Cofins_APR_Mes_Ano_dd-mm-aaaa_HHhMM.csv
+    """
+    from datetime import datetime
+
+    # Gera timestamp: Ex: 12-01-2026_18h42
+    data_hora_atual = datetime.now().strftime("%d-%m-%Y_%Hh%M")
+    nome_arquivo = f"Apuracao_Pis_Cofins_Ramo_{convert_mes_texto(mes)}_{ano}_{data_hora_atual}.csv"
+
+    response = HttpResponse(content_type='text/csv; charset=utf-8')
+    response['Content-Disposition'] = f'attachment; filename="{nome_arquivo}"'
+
+    writer = csv.writer(response, delimiter=';')
+
+    try:
+        # 1. Busca a última Apuração APR salva para o período
+        apc = ApuracaoPisCofinsAPR.objects.filter(ano=ano, mes=mes).order_by('-data_entrada').first()
+
+        if not apc:
+            writer.writerow(['Nenhuma apuracao encontrada para este periodo.'])
+            return response
+
+        # ==============================================================================
+        # BLOCO 1: RESUMO GERAL POR RAMO
+        # ==============================================================================
+        writer.writerow(['--- APURACAO PIS/COFINS ABERTO POR RAMO ---'])
+        writer.writerow(['Ramo', 'Receita', 'Base Calculo', 'PIS', 'COFINS'])
+
+        ramos_apr = RamoAgrupadoPisCofinsAPR.objects.filter(apuracao_piscofins_apr=apc).all()
+
+        total_receita = 0.0
+        total_base = 0.0
+        total_pis = 0.0
+        total_cofins = 0.0
+
+        if ramos_apr:
+            for ramo in ramos_apr:
+                total_receita += ramo.receita
+                total_base += ramo.base_calculo
+                total_pis += ramo.pis_apr
+                total_cofins += ramo.cofins_apr
+
+                writer.writerow([
+                    ramo.ramo,
+                    limpar_string_moeda(locale_br(ramo.receita)),
+                    limpar_string_moeda(locale_br(ramo.base_calculo)),
+                    limpar_string_moeda(locale_br(ramo.pis_apr)),
+                    limpar_string_moeda(locale_br(ramo.cofins_apr))
+                ])
+
+            # Totais Gerais do Resumo
+            writer.writerow([])
+            writer.writerow([
+                'TOTAIS GERAIS',
+                limpar_string_moeda(locale_br(total_receita)),
+                limpar_string_moeda(locale_br(total_base)),
+                limpar_string_moeda(locale_br(total_pis)),
+                limpar_string_moeda(locale_br(total_cofins))
+            ])
+        else:
+            writer.writerow(['Nenhum ramo encontrado para esta apuracao.'])
+
+        writer.writerow([])
+        writer.writerow([])
+
+        # ==============================================================================
+        # BLOCO 2: RELATORIO SINPAG
+        # ==============================================================================
+        movimentos_sinpag = RamoAgrupadoPisCofinsRelatorioSinpag.objects.filter(apuracao_piscofins_apr=apc).all()
+
+        if movimentos_sinpag:
+            writer.writerow(['--- RELATORIO SINPAG ---'])
+            writer.writerow(['Ramo', 'Soma_vr_mov', 'Soma_vr_cos_ced', 'Dif_soma_vr_mod_cos_ced'])
+
+            total_sinpag_dif = 0.0
+
+            for mov in movimentos_sinpag:
+                total_sinpag_dif += mov.dif_soma_vr_mod_cos_ced
+                writer.writerow([
+                    conserta_ramo(mov.ramo),
+                    limpar_string_moeda(locale_br(mov.soma_vr_mov)),
+                    limpar_string_moeda(locale_br(mov.soma_vr_cos_ced)),
+                    limpar_string_moeda(locale_br(mov.dif_soma_vr_mod_cos_ced))
+                ])
+
+            # Rodapé Sinpag
+            writer.writerow(['', '', 'TOTAL:', limpar_string_moeda(locale_br(total_sinpag_dif))])
+            writer.writerow([])
+            writer.writerow([])
+
+        # ==============================================================================
+        # BLOCO 3: RELATORIO SINPAGAC
+        # ==============================================================================
+        movimentos_sinpagac = RamoAgrupadoPisCofinsRelatorioSinpagac.objects.filter(apuracao_piscofins_apr=apc).all()
+
+        if movimentos_sinpagac:
+            writer.writerow(['--- RELATORIO SINPAGAC ---'])
+            writer.writerow(['Ramo', 'Soma_vr_mov'])
+
+            total_sinpagac_mov = 0.0
+
+            for mov in movimentos_sinpagac:
+                total_sinpagac_mov += mov.soma_vr_mov
+                writer.writerow([
+                    conserta_ramo(mov.ramo),
+                    limpar_string_moeda(locale_br(mov.soma_vr_mov))
+                ])
+
+            # Rodapé Sinpagac
+            writer.writerow(['TOTAL:', limpar_string_moeda(locale_br(total_sinpagac_mov))])
+            writer.writerow([])
+            writer.writerow([])
+
+        # ==============================================================================
+        # BLOCO 4: RELATORIO SALVADOS E VENDIDOS
+        # ==============================================================================
+        movimentos_salvados = RamoAgrupadoPisCofinsRelatorioSalvadosVendidos.objects.filter(
+            apuracao_piscofins_apr=apc).all()
+
+        if movimentos_salvados:
+            writer.writerow(['--- RELATORIO SALVADOS E VENDIDOS ---'])
+            writer.writerow(['Ramo', 'Soma_vr_mov'])
+
+            total_salvados_mov = 0.0
+
+            for mov in movimentos_salvados:
+                total_salvados_mov += mov.soma_vr_mov
+                writer.writerow([
+                    conserta_ramo(mov.ramo),
+                    limpar_string_moeda(locale_br(mov.soma_vr_mov))
+                ])
+
+            # Rodapé Salvados
+            writer.writerow(['TOTAL:', limpar_string_moeda(locale_br(total_salvados_mov))])
+            writer.writerow([])
+            writer.writerow([])
+
+        # ==============================================================================
+        # BLOCO 5: RELATORIO RECUPERADOS
+        # ==============================================================================
+        movimentos_recuperados = RamoAgrupadoPisCofinsRelatorioRecuperados.objects.filter(
+            apuracao_piscofins_apr=apc).all()
+
+        if movimentos_recuperados:
+            writer.writerow(['--- RELATORIO RECUPERADOS ---'])
+            writer.writerow(
+                ['Ramo', 'Soma_baixa_ind', 'Soma_baixa_res', 'Soma_baixa_salv', 'Dif_soma_baixa_ind_res_salv'])
+
+            total_recuperados_dif = 0.0
+
+            for mov in movimentos_recuperados:
+                total_recuperados_dif += mov.dif_soma_baixa_ind_res_salv
+                writer.writerow([
+                    conserta_ramo(mov.ramo),
+                    limpar_string_moeda(locale_br(mov.soma_baixa_ind)),
+                    limpar_string_moeda(locale_br(mov.soma_baixa_res)),
+                    limpar_string_moeda(locale_br(mov.soma_baixa_salv)),
+                    limpar_string_moeda(locale_br(mov.dif_soma_baixa_ind_res_salv))
+                ])
+
+            # Rodapé Recuperados
+            writer.writerow(['', '', '', 'TOTAL:', limpar_string_moeda(locale_br(total_recuperados_dif))])
+            writer.writerow([])
+            writer.writerow([])
+
+    except Exception as ex:
+        writer.writerow([])
+        writer.writerow([f"Erro ao gerar relatorio: {str(ex)}"])
+        print(f"Erro export csv: {ex}")
 
     return response

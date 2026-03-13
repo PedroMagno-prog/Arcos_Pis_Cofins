@@ -1,0 +1,12 @@
+# python manage.py shell
+from ibs.models import UsuarioModel
+from ibs.util import *
+
+usuario  = UsuarioModel()
+
+usuario.nome = 'admin'
+usuario.email = 'admin@gmail.com'
+usuario.senha = criptografar_senha('adminadmin')
+
+usuario.save()
+
